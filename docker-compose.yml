@@ -1,11 +1,10 @@
-version: '3.8'
+name: rfp-response-accelerator
 
 services:
   postgres:
     image: ankane/pgvector:latest
-    container_name: enterprise_vector_postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_USER: rag_admin
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
