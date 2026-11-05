@@ -1,7 +1,7 @@
 from typing import Optional, List
 import cohere
-from anthropic import AsyncAnthropic
 from fastapi import APIRouter, Depends, HTTPException, status
+from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
 from app.config import settings
 from app.database import get_db_pool
@@ -13,8 +13,8 @@ router = APIRouter(prefix="/documents", tags=["Documents"])
 # Async Cohere client for reranking (non-blocking, safe to call from async endpoints)
 cohere_client = cohere.AsyncClientV2(api_key=settings.COHERE_API_KEY)
 
-# Async Anthropic client for answer synthesis (non-blocking, safe to call from async endpoints)
-anthropic_client = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+# Async OpenAI client for answer synthesis (non-blocking, safe to call from async endpoints)
+answer_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 # =====================================================================
@@ -233,7 +233,8 @@ async def search_documents(
 async def _synthesize_answer(query: str, retrieved_context: List[SearchResultResponse]) -> AnswerResponse:
     """
     Step B + Step C of the answer pipeline: builds a strictly-grounded system
-    prompt from the retrieved chunks and calls Claude to synthesize a cited answer.
+    prompt from the retrieved chunks and calls the OpenAI Responses API to synthesize
+    a cited answer.
     Shared by the /answer HTTP endpoint and the MCP `query_enterprise_rag` tool
     so both surfaces stay identical.
     """
@@ -261,21 +262,24 @@ async def _synthesize_answer(query: str, retrieved_context: List[SearchResultRes
         f"Context:\n{context_blocks}"
     )
 
-    # Step C: Call the Anthropic Messages API to synthesize the grounded answer
+    # Step C: Call the OpenAI Responses API to synthesize the grounded answer.
     try:
-        response = await anthropic_client.messages.create(
+        response = await answer_client.responses.create(
             model=settings.ANSWER_MODEL,
-            max_tokens=2048,
-            system=system_prompt,
-            messages=[{"role": "user", "content": query}]
+            instructions=system_prompt,
+            input=query,
+            max_output_tokens=2048,
+            store=False,
         )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Anthropic answer synthesis failure: {str(e)}"
+            detail=f"OpenAI answer synthesis failure: {str(e)}"
         )
 
-    answer_text = next((block.text for block in response.content if block.type == "text"), "")
+    answer_text = response.output_text
+    if not answer_text:
+        answer_text = "I could not generate an answer from the retrieved evidence."
 
     return AnswerResponse(
         query=query,
@@ -293,7 +297,7 @@ async def answer_query(
     """
     Answers a natural-language query by retrieving the most relevant document
     chunks via hybrid search + Cohere reranking, then synthesizing a grounded
-    answer with Claude, citing the source chunks it drew from.
+    answer with the OpenAI Responses API, citing the source chunks it drew from.
     """
     # Step A: Hybrid search + Cohere rerank to get the top N relevant chunks
     retrieved_context = await _hybrid_search_and_rerank(payload.query, payload.top_k, pool)
