@@ -1,4 +1,4 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from datetime import datetime, timezone
 import openai
 from openai import AsyncOpenAI
@@ -116,14 +116,25 @@ class HierarchicalIngestionPipeline:
 
 
 class IngestionService:
-    pipeline = HierarchicalIngestionPipeline()
+    pipeline: Optional[HierarchicalIngestionPipeline] = None
+
+    @classmethod
+    def _get_pipeline(cls) -> HierarchicalIngestionPipeline:
+        """Create the tokenizer-dependent pipeline only when ingestion is requested."""
+        if cls.pipeline is None:
+            cls.pipeline = HierarchicalIngestionPipeline()
+        return cls.pipeline
 
     @classmethod
     def chunk_text(cls, text: str, doc_id: str = "doc", source_path: str = "raw_input") -> List[Dict[str, Any]]:
         """
         Splits text using the HierarchicalIngestionPipeline.
         """
-        return cls.pipeline.process_document(raw_text=text, doc_id=doc_id, source_path=source_path)
+        return cls._get_pipeline().process_document(
+            raw_text=text,
+            doc_id=doc_id,
+            source_path=source_path,
+        )
 
     @staticmethod
     async def generate_embeddings(chunks: List[str]) -> List[List[float]]:
