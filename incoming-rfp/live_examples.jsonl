@@ -1,0 +1,2 @@
+{"id": "live-deployment-models", "endpoint": "/documents/answer", "request": {"query": "What deployment models do you offer?", "top_k": 3}, "expected_behavior": "answer"}
+{"id": "live-fedramp-moderate", "source_question_id": "q11", "endpoint": "/documents/answer", "request": {"query": "Confirm that Halebrook holds FedRAMP Moderate authorization and provide the package identifier.", "top_k": 3}, "expected_behavior": "answer_negative"}
