@@ -1,8 +1,8 @@
 # RFP Response Accelerator
 
-A FastAPI demonstration of evidence-grounded RFP drafting using **OpenAI Platform & APIs**, specifically the **Responses API with Pydantic Structured Outputs**.
+A FastAPI application for evidence-grounded RFP drafting using the **OpenAI Responses API with Pydantic Structured Outputs**.
 
-The application retrieves relevant enterprise documentation, reranks it, and generates an answer with an explicit decision, source references, and a review flag. The supplied corpus describes **Halebrook Systems**, a fictional infrastructure and security software vendor. It is synthetic demonstration content, not a set of verified claims about a real company.
+The application retrieves relevant enterprise documentation, reranks it, and generates an answer with an explicit decision, source references, and a review flag. The supplied corpus describes **Halebrook Systems**, a fictional infrastructure and security software vendor. The corpus is synthetic sample data, not a set of verified claims about a real company.
 
 ## Architecture
 
@@ -22,7 +22,7 @@ RFP question
     → answer, decision, citations, retrieved evidence, and SME-review flag
 ```
 
-Retrieval stays in the application and PostgreSQL. This demo does not use OpenAI-hosted file search or an agent framework.
+Retrieval stays in the application and PostgreSQL. The application does not use OpenAI-hosted file search or an agent framework.
 
 | Component | Purpose |
 | --- | --- |
@@ -39,7 +39,7 @@ Commands below use Windows PowerShell from the repository root.
 
 ### Prerequisites
 
-- Python 3.12 is recommended for the demonstrated setup.
+- Python 3.12 is recommended.
 - Docker Desktop running Linux containers.
 - OpenAI API access for embeddings and the configured answer model.
 - Cohere API access for reranking.
@@ -93,7 +93,7 @@ DATABASE_URL=postgresql://rag_admin:YOUR_LOCAL_PASSWORD@localhost:5433/ai_enterp
 
 If Compose maps `5432:5432`, use `localhost:5432` instead. The password must match `POSTGRES_PASSWORD`. Changing an environment variable does not update a password in an already-initialized database volume.
 
-The isolated Windows demo configuration uses host port 5433 to coexist with another project's database on port 5432. Keep projects on distinct Compose project names, volumes, and host ports; do not remove another project's database to resolve a name conflict.
+To run alongside another PostgreSQL instance on port 5432, use host port 5433. Keep projects on distinct Compose project names, volumes, and host ports; do not remove another project's database to resolve a name conflict.
 
 ### 3. Start the database and API
 
@@ -202,20 +202,20 @@ Mocked tests cover structured response handling, failure paths, citation integri
 
 Representative manual live checks have exercised corpus ingestion, retrieval/reranking, deployment answers, and explicit FedRAMP non-authorization. These are integration examples, not a systematic evaluation of answer quality across the dataset. Mocked tests cannot establish model decision accuracy.
 
-## Interview demonstration
+## Try the application
 
-Preload the knowledge base, verify credentials, and rehearse before presenting. Keep ingestion outside the recorded question-answer flow.
+Complete setup and ingest the sample corpus once, then keep the database and API running. Open http://127.0.0.1:8000/docs and expand **POST /documents/answer**. Select **Try it out**, enter one of the requests below, and select **Execute**.
 
-A short recording can follow this sequence:
+For each response:
 
-1. Explain the problem: technical RFP answers need approved evidence and clear handling of uncertainty.
-2. Show the architecture and identify Responses API plus Structured Outputs as the chosen OpenAI surface.
-3. Submit the deployment question; show the answer, evidence IDs, decision, and Gate exception.
-4. Submit the FedRAMP question; show an evidence-supported negative rather than an invented authorization.
-5. Submit an undocumented-capability question; show whether it appropriately declines and requests review.
-6. Explain validation boundaries and future evaluation work.
+1. Read the drafted answer and its decision.
+2. Match the IDs in `citations` to entries in `retrieved_context`.
+3. Check whether the retrieved passages support the answer's claims.
+4. Inspect `needs_sme_review` and `reason` for limitations or required review.
 
-Prepared Swagger requests:
+To inspect retrieval independently, use **POST /documents/search** with the same question and `limit: 3`.
+
+Example answer requests:
 
 ```json
 {"query": "What deployment models are supported?", "top_k": 3}
@@ -229,20 +229,20 @@ Prepared Swagger requests:
 {"query": "Do you support Kubernetes admission controller integration for runtime policy enforcement?", "top_k": 3}
 ```
 
-Expected decisions are `answer`, `answer_negative`, and `refuse`, respectively, when the retrieved evidence supports those outcomes. Rehearse all three; generation and retrieval outcomes are not guaranteed. If a result is wrong, record the failure rather than presenting it as passing.
+Expected decisions for these examples are `answer`, `answer_negative`, and `refuse`, respectively, when using the supplied corpus. The first should explain the Gate-specific deployment exception; the second should state that FedRAMP authorization is not held without inventing an identifier; the third should acknowledge insufficient evidence and require review.
 
-Align slides with **Halebrook Systems** as the synthetic vendor and **RFP Response Accelerator** as the application. Keep a backup screen recording and label saved responses as recorded examples rather than live results.
+Retrieval and generation can vary. Compare actual responses with the source passages rather than treating the expected labels as guaranteed outcomes. No reingestion is needed when changing questions or answer instructions.
 
 ## Limitations and next steps
 
 - Citation validation checks that IDs belong to retrieved evidence; it does not prove factual entailment or complete citation coverage.
 - Structured Outputs constrain shape, not truth or decision accuracy.
 - Prompt instructions reduce document-injection risk but do not eliminate it.
-- SME review is a returned flag; no approval queue, notification, or submission workflow is implemented.
+- SME review is a returned flag; no approval queue or notification workflow is implemented.
 - `MIN_RERANK_SCORE` is not an active confidence gate. Reranking scores are relevance signals, not calibrated probabilities.
 - The supplied question dataset is not an implemented evaluation runner. Systematic retrieval and decision evaluation is future work.
 - Ingestion can create duplicates; no document-versioning or refresh workflow is implemented.
-- This is a local demo without production authentication, tenant isolation, deployment hardening, or an elaborate frontend.
+- This is a local prototype without production authentication, tenant isolation, deployment hardening, or an elaborate frontend.
 - API usage incurs provider costs. Only send content you are authorized to share with those providers.
 
 ## Repository layout
