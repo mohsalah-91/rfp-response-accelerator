@@ -2,44 +2,70 @@
 
 ## Project Structure & Module Organization
 
-- `app/` — FastAPI service: `main.py` (app, `/` and `/health`), `router.py` (ingest/search/answer endpoints), `database.py` (connection pool and startup migrations), `config.py` (settings loaded from environment), `ingest.py` (chunking).
-- `mcp_server.py` — MCP server exposing the RAG pipeline as tools; exercised by CI in `.github/workflows/rag-ci.yml`.
-- `migrations/` — SQL files applied in order on startup.
-- `tests/` — unit tests, mirroring the module paths they cover.
-- `scripts/` — corpus ingestion and CI seeding; `eval/` — golden set and `run_eval.py`.
-- `corpus/` — local source documents (git-ignored).
-- `infra/` — Azure infrastructure as Bicep.
+- `app/` — FastAPI application. `main.py` creates the app and health endpoint; `router.py` provides document ingest, search, and answer endpoints; `database.py` owns the async PostgreSQL pool and startup migrations; `config.py` loads settings; `ingest.py` chunks documents and generates embeddings; `answer_models.py` defines the Pydantic Structured Outputs model.
+- `migrations/` — SQL migrations applied during FastAPI startup.
+- `scripts/ingest_corpus.py` — client for ingesting the tracked sample corpus.
+- `tests/` — standard-library `unittest` coverage for health, import/tokenizer behavior, and structured answer handling.
+- `corpus/` — tracked synthetic Halebrook markdown source data. Do not alter corpus files unless the task explicitly requests it.
+- `incoming-rfp/` — labeled sample questions, recorded live-request examples, and their documentation.
+- `docker-compose.yml` — local PostgreSQL with pgvector. `.env.example` contains sanitized configuration examples.
 
-Configuration examples belong in `.env.example`; never commit generated indexes or local downloads.
+## Architecture
 
-## Build, Test, and Development Commands
+The application stores chunks and 1536-dimension embeddings in PostgreSQL with pgvector. Search combines vector similarity and PostgreSQL full-text retrieval with reciprocal-rank fusion (RRF), then reranks candidates through Cohere. Keep this retrieval architecture unchanged unless the task explicitly scopes retrieval work.
 
-Typical local workflow:
+Answer synthesis uses the asynchronous OpenAI Responses API with Pydantic Structured Outputs: `responses.parse(..., text_format=GroundedAnswer)`. The answer endpoint returns an answer, one of five decisions, citation chunk IDs, a short reason, and an SME-review flag. Citation validation confirms only that cited IDs belong to retrieved context; it does not establish factual entailment. SME review is a returned flag, not an approval, notification, queue, or persistence workflow.
 
-- `python -m venv venv` creates an isolated Python environment (git-ignored).
-- `venv\Scripts\Activate.ps1` activates it in PowerShell.
-- `pip install -r requirements.txt` installs dependencies.
-- `docker compose up -d` starts local Postgres with `pgvector` (requires `POSTGRES_PASSWORD` in `.env`).
-- `uvicorn app.main:app --reload` runs the API at `http://127.0.0.1:8000`.
-- `python -m unittest discover -s tests -v` runs the test suite; use `python -m unittest tests.test_health -v` while iterating.
-- `docker build -t enterprise-rag-mcp .` builds the deployable MCP image.
+Tokenizer initialization is lazy: importing the application must not initialize `tiktoken`; tokenizer setup occurs only when chunking is requested.
 
-Document any new required service, environment variable, or startup command in the README and `.env.example`. The container serves MCP over Streamable HTTP on `MCP_HOST=0.0.0.0` and `MCP_SERVER_PORT=8765`; the local MCP server defaults to `127.0.0.1:8765`.
+## Local Setup and Commands
 
-## Coding Style & Naming Conventions
+Use the existing `venv` when it is present. From PowerShell at the repository root:
 
-No formatter or linter is configured; match the surrounding code. Use four spaces for Python indentation, `snake_case` for functions, variables, and modules, and `PascalCase` for classes. Prefer explicit types at public interfaces and concise docstrings for modules or functions with non-obvious RAG, retrieval, or persistence behavior. Name tests after the behavior they verify, for example `test_retriever_returns_ranked_results`.
+```powershell
+.\venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m pip check
+```
 
-## Testing Guidelines
+If activation is unavailable, invoke the existing environment directly:
 
-Tests use the standard-library `unittest` with `httpx.ASGITransport` for HTTP endpoints. Add or update tests for every behavior change. Keep fixtures small and deterministic; mock external model, vector-store, and network calls so unit tests run without credentials. Test failures, empty retrieval results, and malformed input alongside successful paths. Run the relevant tests before opening a pull request.
+```powershell
+.\venv\Scripts\python.exe -m pip check
+```
 
-## Commit & Pull Request Guidelines
+Create `.env` from `.env.example` only when needed, then set local credentials without committing them. Start the local services and API with:
 
-Write short, imperative commit subjects that describe one change, such as `Add document chunk validation`. Keep commits focused. Pull requests should explain the user-facing or operational effect, link the related issue when available, list verification performed, and identify configuration or migration changes. Include screenshots or example API output when an interface or response format changes.
+```powershell
+docker compose up -d postgres
+docker compose exec -T postgres pg_isready -U rag_admin -d ai_enterprise_db
+.\venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
 
-## Security & Configuration
+Compose resolves this repository as project `rfp-response-accelerator`, isolating its default network and `pgvector_data` volume. PostgreSQL is published on host port `5433` (container port `5432`); use the matching `DATABASE_URL` from `.env.example`.
 
-Never commit API keys, tokens, private documents, generated embeddings, or `.env` files. Load secrets from environment variables and provide sanitized example values only.
+Run checks with:
 
-Never run `az` or `kubectl` against live Azure. Infrastructure lives in `infra/` as Bicep. Run the test suite before proposing changes.
+```powershell
+.\venv\Scripts\python.exe -m unittest discover -s tests -v
+.\venv\Scripts\python.exe -m pip check
+git diff --check
+```
+
+## Ingestion and Data Safety
+
+The corpus is synthetic sample data tracked in Git. Leave it unchanged unless explicitly asked. Ingestion is not idempotent: repeating an ingest inserts duplicate chunks. Do not ingest, reingest, delete data, or reset the database without task authorization.
+
+## Coding and Testing
+
+Match the surrounding code: four-space Python indentation, `snake_case` for functions, variables, and modules, and `PascalCase` for classes. Prefer explicit types at public interfaces and concise docstrings where retrieval, persistence, or validation behavior is non-obvious.
+
+Use `unittest` and `httpx.ASGITransport` for endpoint tests. Mock provider, database, vector-store, and network behavior so unit tests run without credentials. Cover successful behavior, malformed or incomplete provider output, empty retrieval, invalid citations, and provider failures when relevant. Keep tokenizer import regression coverage passing.
+
+Report mocked-test results separately from live provider checks. Mocked tests validate application behavior and request/response handling; they do not demonstrate live model decision accuracy. Do not make live provider calls unless explicitly authorized.
+
+## Security and Change Scope
+
+Never expose API keys, passwords, tokens, private data, provider exceptions containing request data, or `.env` contents. Never commit `.env`; use sanitized placeholders in `.env.example` only. Preserve unrelated local changes in a dirty worktree.
+
+Keep changes targeted. Do not change Docker configuration, database contents, retrieval behavior, or corpus data unless the request authorizes it. Run relevant tests and `git diff --check` before handing off changes. Use focused, imperative commit subjects if a commit is requested.
