@@ -107,8 +107,13 @@ Wait for **Application startup complete**. Startup creates the pgvector extensio
 
 - Health: http://127.0.0.1:8000/health
 - Interactive API: http://127.0.0.1:8000/docs
+- RFP response interface: http://127.0.0.1:8000/ui
 
 The health endpoint is a liveness check, not a complete provider-readiness test. Database initialization happens during application startup.
+
+### Use the RFP response interface
+
+After starting the API, open http://127.0.0.1:8000/ui in a browser. Enter an RFP question or select an example, then choose **Generate answer**. The interface sends the question to the local `/documents/answer` endpoint with `top_k: 3`, shows the returned decision and reason, and lets you expand cited sources and all retrieved evidence. The SME-review indicator reports the response flag; it is not an approval workflow.
 
 ### 4. Ingest once
 

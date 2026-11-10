@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A grounded RFP response interface for synthetic Halebrook Systems documentation.">
+  <title>RFP Response Accelerator</title>
+  <link rel="stylesheet" href="/ui/static/styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="hero">
+      <p class="eyebrow">Evidence-grounded drafting</p>
+      <h1>RFP Response Accelerator</h1>
+      <p class="intro">Draft a response from the synthetic Halebrook Systems knowledge base. Review the returned evidence before using any result.</p>
+    </header>
+
+    <section class="panel question-panel" aria-labelledby="question-heading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Start here</p>
+          <h2 id="question-heading">Ask a question</h2>
+        </div>
+        <p class="field-note">A question must contain at least 3 characters.</p>
+      </div>
+
+      <div class="examples" aria-label="Example questions">
+        <p class="examples-label">Try an example</p>
+        <div class="example-list">
+          <button class="example-button" type="button" data-question="What deployment models are supported?">Deployment models</button>
+          <button class="example-button" type="button" data-question="Confirm that Halebrook holds FedRAMP Moderate authorization and provide the package identifier.">FedRAMP authorization</button>
+          <button class="example-button" type="button" data-question="Do you support Kubernetes admission controller integration for runtime policy enforcement?">Kubernetes integration</button>
+        </div>
+      </div>
+
+      <form id="answer-form" novalidate>
+        <label for="question">Question</label>
+        <textarea id="question" name="question" rows="5" minlength="3" required aria-describedby="question-help" placeholder="For example: What deployment models are supported?"></textarea>
+        <p id="question-help" class="field-note">The request is sent to this application only when you select Generate answer.</p>
+        <div class="form-actions">
+          <button id="submit-button" class="primary-button" type="submit">Generate answer</button>
+          <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+    </section>
+
+    <section id="error-panel" class="alert error-alert" role="alert" hidden>
+      <h2>Unable to generate an answer</h2>
+      <p id="error-message"></p>
+    </section>
+
+    <section id="results" class="results" aria-live="polite" hidden>
+      <div class="result-header">
+        <div>
+          <p class="eyebrow">Generated response</p>
+          <h2>Answer</h2>
+        </div>
+        <span id="decision-badge" class="decision-badge"></span>
+      </div>
+
+      <div id="review-alert" class="alert review-alert" hidden>
+        <h3>SME review required</h3>
+        <p>This indicator reports the response flag. It does not represent an approval workflow.</p>
+      </div>
+
+      <article class="panel answer-card">
+        <p id="answer-text" class="answer-text"></p>
+        <div class="metadata-grid">
+          <div><h3>Reason</h3><p id="reason-text"></p></div>
+          <div><h3>Model</h3><p id="model-text"></p></div>
+        </div>
+      </article>
+
+      <section class="evidence-section" aria-labelledby="citations-heading">
+        <div class="section-heading compact">
+          <div><p class="eyebrow">Supporting evidence</p><h2 id="citations-heading">Citations</h2></div>
+          <p id="citation-summary" class="field-note"></p>
+        </div>
+        <div id="citation-list" class="source-list"></div>
+      </section>
+
+      <section class="evidence-section" aria-labelledby="retrieved-heading">
+        <div class="section-heading compact">
+          <div><p class="eyebrow">Retrieved evidence</p><h2 id="retrieved-heading">All retrieved chunks</h2></div>
+          <p class="field-note">Cited sources are marked below. Retrieval ordering and scores are not confidence measures.</p>
+        </div>
+        <div id="retrieved-list" class="source-list"></div>
+      </section>
+    </section>
+  </main>
+  <script src="/ui/static/app.js" defer></script>
+</body>
+</html>
