@@ -26,7 +26,7 @@ Retrieval stays in the application and PostgreSQL. The application does not use 
 
 | Component | Purpose |
 | --- | --- |
-| FastAPI | HTTP endpoints and interactive API documentation |
+| FastAPI | HTTP endpoints, the browser interface at `/ui`, and interactive API documentation at `/docs` |
 | PostgreSQL + pgvector | Persistent document chunks, vector similarity, and full-text retrieval |
 | OpenAI embeddings | Document and query vectors; default `text-embedding-3-small` |
 | Cohere | Reranking; default `rerank-v3.5` |
@@ -106,14 +106,14 @@ python -m uvicorn app.main:app --reload
 Wait for **Application startup complete**. Startup creates the pgvector extension, document table, and full-text migration objects.
 
 - Health: http://127.0.0.1:8000/health
-- Interactive API: http://127.0.0.1:8000/docs
-- RFP response interface: http://127.0.0.1:8000/ui
+- Browser interface: http://127.0.0.1:8000/ui
+- Interactive API alternative: http://127.0.0.1:8000/docs
 
 The health endpoint is a liveness check, not a complete provider-readiness test. Database initialization happens during application startup.
 
 ### Use the RFP response interface
 
-After starting the API, open http://127.0.0.1:8000/ui in a browser. Enter an RFP question or select an example, then choose **Generate answer**. The interface sends the question to the local `/documents/answer` endpoint with `top_k: 3`, shows the returned decision and reason, and lets you expand cited sources and all retrieved evidence. The SME-review indicator reports the response flag; it is not an approval workflow.
+After starting the API, open http://127.0.0.1:8000/ui in a browser. Enter an RFP question or select an example, then choose **Generate answer**. The interface sends the question to the local `/documents/answer` endpoint with `top_k: 3`, shows the drafted answer, returned decision, and reason, and lets you expand cited sources and all retrieved evidence. The SME-review indicator reports the response flag; it is not an approval workflow. FastAPI serves this UI and its static assets directly, so no separate frontend server or build step is needed. Use `/docs` instead when you prefer the interactive API.
 
 ### 4. Ingest once
 
@@ -209,7 +209,7 @@ Representative manual live checks have exercised corpus ingestion, retrieval/rer
 
 ## Try the application
 
-Complete setup and ingest the sample corpus once, then keep the database and API running. Open http://127.0.0.1:8000/docs and expand **POST /documents/answer**. Select **Try it out**, enter one of the requests below, and select **Execute**.
+Complete setup and ingest the sample corpus once, then keep the database and API running. The browser interface at http://127.0.0.1:8000/ui is the direct question-submission workflow. Alternatively, open http://127.0.0.1:8000/docs and expand **POST /documents/answer**. Select **Try it out**, enter one of the requests below, and select **Execute**.
 
 For each response:
 
@@ -254,11 +254,15 @@ Retrieval and generation can vary. Compare actual responses with the source pass
 
 ```text
 app/                         FastAPI, configuration, retrieval, ingestion, answer models
+app/static/index.html        Browser interface markup served at /ui
+app/static/app.js            Browser question submission and answer/evidence rendering
+app/static/styles.css        Browser interface styles
 corpus/                      Synthetic Halebrook source documents
 incoming-rfp/questions.jsonl  Questions and expected behaviors/sources
 migrations/                  Database migrations applied on startup
 scripts/ingest_corpus.py      Corpus ingestion client
-tests/                       Automated tests
+tests/test_ui.py             Browser UI, static-asset, and public-route tests
+tests/                       Other automated tests for health, imports, and answer handling
 docker-compose.yml           Local PostgreSQL/pgvector service
 .env.example                 Configuration template without real credentials
 ```
