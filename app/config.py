@@ -21,11 +21,8 @@ class AppSettings(BaseSettings):
     # AI Engine Model Defaults
     EMBEDDING_MODEL: str = "text-embedding-3-small"
     RERANK_MODEL: str = "rerank-v3.5"
-    ANSWER_MODEL: str = "gpt-5"
+    ANSWER_MODEL: str = "gpt-5.6-sol"
     RAG_DEFAULT_TOP_K: int = Field(default=3, ge=1, le=10)
-
-     # Below this rerank score, no answer is drafted and the question is routed to an SME
-    MIN_RERANK_SCORE: float = Field(default=0.40, ge=0.0, le=1.0)
 
     # Instruct Pydantic to read directly from your local .env file
     model_config = SettingsConfigDict(

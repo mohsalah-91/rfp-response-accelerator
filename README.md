@@ -244,7 +244,7 @@ Retrieval and generation can vary. Compare actual responses with the source pass
 - Structured Outputs constrain shape, not truth or decision accuracy.
 - Prompt instructions reduce document-injection risk but do not eliminate it.
 - SME review is a returned flag; no approval queue or notification workflow is implemented.
-- `MIN_RERANK_SCORE` is not an active confidence gate. Reranking scores are relevance signals, not calibrated probabilities.
+- Relevance gating is handled by the model's `decision` field rather than a numeric reranker threshold: reranker relevance scores are not calibrated probabilities, and a threshold tuned on the 15-question sample would overfit.
 - The supplied question dataset is not an implemented evaluation runner. Systematic retrieval and decision evaluation is future work.
 - Ingestion can create duplicates; no document-versioning or refresh workflow is implemented.
 - This is a local prototype without production authentication, tenant isolation, deployment hardening, or an elaborate frontend.

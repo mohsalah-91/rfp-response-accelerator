@@ -237,12 +237,7 @@ async def search_documents(
 
 
 async def _synthesize_answer(query: str, retrieved_context: List[SearchResultResponse]) -> AnswerResponse:
-    """
-    Step B + Step C of the answer pipeline: packages retrieved chunks as untrusted
-    input and calls the OpenAI Responses API to synthesize a grounded, cited answer.
-    Shared by the /answer HTTP endpoint and the MCP `query_enterprise_rag` tool
-    so both surfaces stay identical.
-    """
+    """Use reranked chunks with OpenAI Structured Outputs to produce a grounded, cited decision."""
     if not retrieved_context:
         return AnswerResponse(
             query=query,
