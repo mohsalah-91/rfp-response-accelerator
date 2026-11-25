@@ -391,7 +391,8 @@ async def _synthesize_answer(query: str, retrieved_context: List[SearchResultRes
         "exist solely because certification is absent; state that the evidence does not provide the identifier. "
         "Explicitly acknowledge insufficient evidence, set needs_sme_review true for incomplete, missing, or "
         "conflicting evidence, and explain applicable policy restrictions without inventing policies. "
-        "The reason must be a short user-facing justification, not private reasoning."
+        "The reason must be a short user-facing justification, not private reasoning. "
+        "For formatting, do not use em dashes; use commas, periods, or parentheses instead."
     )
     answer_input = json.dumps(
         {

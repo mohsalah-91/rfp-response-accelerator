@@ -43,9 +43,18 @@
       </section>
       <section id="error-panel" class="alert error-alert" role="alert" hidden><h2>Unable to generate an answer</h2><p id="error-message"></p></section>
       <section id="results" class="results" aria-live="polite" hidden>
-        <div class="result-header"><div><p class="eyebrow">Generated response</p><h2>Answer</h2></div><span id="decision-badge" class="decision-badge decision-badge-large"></span></div>
+        <div class="result-header">
+          <div><p class="eyebrow">Generated response</p><h2>Answer</h2></div>
+          <div id="decision-rail" class="decision-rail" aria-label="Answer decision">
+            <span class="decision-rail-item" data-decision="answer" tabindex="0" aria-describedby="decision-help-answer">answer<span id="decision-help-answer" class="decision-tooltip" role="tooltip">The evidence supports a direct, complete answer.</span></span>
+            <span class="decision-rail-item" data-decision="answer_negative" tabindex="0" aria-describedby="decision-help-answer-negative">answer_negative<span id="decision-help-answer-negative" class="decision-tooltip" role="tooltip">The evidence shows the answer is no. Stated plainly rather than hedged.</span></span>
+            <span class="decision-rail-item" data-decision="answer_partial" tabindex="0" aria-describedby="decision-help-answer-partial">answer_partial<span id="decision-help-answer-partial" class="decision-tooltip" role="tooltip">The evidence covers part of the question. The gap is named and the response is flagged for SME review.</span></span>
+            <span class="decision-rail-item" data-decision="redirect" tabindex="0" aria-describedby="decision-help-redirect">redirect<span id="decision-help-redirect" class="decision-tooltip" role="tooltip">A valid question that belongs to another team, such as pricing or legal. Not answered from the corpus.</span></span>
+            <span class="decision-rail-item" data-decision="refuse" tabindex="0" aria-describedby="decision-help-refuse">refuse<span id="decision-help-refuse" class="decision-tooltip" role="tooltip">Nothing in the corpus supports an answer. No response is drafted.</span></span>
+          </div>
+        </div>
         <div id="review-alert" class="alert review-alert" hidden><h3>SME review required</h3><p>This indicator reports the response flag. It does not represent an approval workflow.</p></div>
-        <article class="panel answer-card"><p id="answer-text" class="answer-text"></p><div class="metadata-row" aria-label="Response metadata"><span id="reason-text"></span><span id="model-text"></span><span id="citation-summary"></span></div></article>
+        <article class="panel answer-card"><p id="answer-text" class="answer-text"></p><div class="metadata-row" aria-label="Response metadata"><div class="metadata-primary-row"><span id="reason-text"></span><span id="model-text"></span><span id="citation-summary" class="citation-chips" aria-label="Citations"></span></div><span id="timings-summary" class="timing-summary" aria-label="Response timings"></span></div></article>
         <section class="evidence-section" aria-labelledby="retrieved-heading">
           <div class="section-heading compact"><div><p class="eyebrow">Retrieved evidence</p><h2 id="retrieved-heading">Retrieved chunks</h2></div><p class="field-note">Cited sources appear first. Expand a chunk to read it; retrieval ordering and scores are not confidence measures.</p></div>
           <div id="retrieved-list" class="source-list"></div>

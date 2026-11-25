@@ -56,6 +56,7 @@ class AnswerGenerationTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("answer_negative", kwargs["instructions"])
         self.assertIn("Documented product-specific exceptions are not contradictions", kwargs["instructions"])
         self.assertIn("evidence does not provide the identifier", kwargs["instructions"])
+        self.assertIn("do not use em dashes", kwargs["instructions"])
         self.assertNotIn("Revenue grew", kwargs["instructions"])
 
     async def test_answer_negative_requires_and_returns_evidence(self) -> None:

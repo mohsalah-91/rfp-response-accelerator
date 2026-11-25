@@ -9,12 +9,13 @@
   const errorPanel = document.querySelector("#error-panel");
   const errorMessage = document.querySelector("#error-message");
   const answerText = document.querySelector("#answer-text");
-  const decisionBadge = document.querySelector("#decision-badge");
+  const decisionRail = document.querySelector("#decision-rail");
   const reasonText = document.querySelector("#reason-text");
   const modelText = document.querySelector("#model-text");
   const reviewAlert = document.querySelector("#review-alert");
   const retrievedList = document.querySelector("#retrieved-list");
   const citationSummary = document.querySelector("#citation-summary");
+  const timingsSummary = document.querySelector("#timings-summary");
   const singleTab = document.querySelector("#single-tab");
   const batchTab = document.querySelector("#batch-tab");
   const singleMode = document.querySelector("#single-mode");
@@ -48,11 +49,11 @@
     errorPanel.hidden = true;
     reviewAlert.hidden = true;
     answerText.textContent = "";
-    decisionBadge.textContent = "";
-    decisionBadge.removeAttribute("data-decision");
+    decisionRail.querySelectorAll(".decision-rail-item").forEach((item) => item.classList.remove("is-active"));
     reasonText.textContent = "";
     modelText.textContent = "";
     citationSummary.textContent = "";
+    timingsSummary.textContent = "";
     clearElement(retrievedList);
   }
 
@@ -65,6 +66,7 @@
   function sourceCard(chunk, cited) {
     const card = document.createElement("details");
     card.className = "source-card";
+    card.id = `chunk-${chunk.id}`;
     if (cited) card.classList.add("source-card-cited");
     const summary = document.createElement("summary");
     const id = document.createElement("span");
@@ -80,11 +82,73 @@
       tag.textContent = "Cited";
       summary.append(tag);
     }
+    const score = Number(chunk.rerank_score);
+    const scoreRow = document.createElement("div");
+    scoreRow.className = "source-score";
+    const scoreLabel = document.createElement("span");
+    scoreLabel.textContent = "Rerank score";
+    const scoreTrack = document.createElement("span");
+    scoreTrack.className = "score-track";
+    scoreTrack.setAttribute("role", "progressbar");
+    scoreTrack.setAttribute("aria-label", "Cohere rerank score on a fixed zero to one scale");
+    const scoreBar = document.createElement("span");
+    scoreBar.className = "score-bar";
+    const scoreValue = Number.isFinite(score) ? Math.max(0, Math.min(1, score)) : 0;
+    scoreBar.style.width = `${scoreValue * 100}%`;
+    scoreTrack.setAttribute("aria-valuemin", "0");
+    scoreTrack.setAttribute("aria-valuemax", "1");
+    scoreTrack.setAttribute("aria-valuenow", String(scoreValue));
+    scoreTrack.append(scoreBar);
+    const scoreText = document.createElement("span");
+    scoreText.textContent = Number.isFinite(score) ? scoreValue.toFixed(3) : "Not available";
+    scoreRow.append(scoreLabel, scoreTrack, scoreText);
     const content = document.createElement("pre");
     content.className = "source-content";
     content.textContent = chunk.content || "No content was returned.";
-    card.append(summary, content);
+    card.append(summary, scoreRow, content);
     return card;
+  }
+
+  function highlightCitation(chunkId) {
+    const card = document.querySelector(`#chunk-${chunkId}`);
+    if (!card) return;
+    card.open = true;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    card.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "center" });
+    card.classList.remove("citation-flash", "citation-highlight");
+    if (reducedMotion) {
+      card.classList.add("citation-highlight");
+      return;
+    }
+    card.classList.add("citation-flash");
+    window.setTimeout(() => card.classList.remove("citation-flash"), 1000);
+  }
+
+  function citationChip(chunkId) {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "citation-chip";
+    chip.textContent = `Chunk ${chunkId}`;
+    chip.setAttribute("aria-label", `Show cited chunk ${chunkId}`);
+    chip.addEventListener("click", () => highlightCitation(chunkId));
+    return chip;
+  }
+
+  function renderTimings(timings) {
+    clearElement(timingsSummary);
+    if (!timings || typeof timings !== "object") return;
+    const values = [
+      ["Retrieve", timings.retrieve],
+      ["Rerank", timings.rerank],
+      ["Synthesize", timings.synthesize],
+      ["Total", timings.total],
+    ];
+    if (Number(timings.rerank_wait) > 0) values.splice(2, 0, ["Rerank wait", timings.rerank_wait]);
+    values.forEach(([label, value]) => {
+      const item = document.createElement("span");
+      item.textContent = `${label}: ${Number.isFinite(Number(value)) ? Number(value) : 0} ms`;
+      timingsSummary.append(item);
+    });
   }
 
   function emptyState(message) {
@@ -98,11 +162,16 @@
     const citedIds = new Set(Array.isArray(data.citations) ? data.citations : []);
     const retrieved = sortedChunks(data);
     answerText.textContent = data.answer || "";
-    decisionBadge.textContent = data.decision || "No decision";
-    decisionBadge.dataset.decision = data.decision || "";
+    decisionRail.querySelectorAll(".decision-rail-item").forEach((item) => {
+      item.classList.toggle("is-active", item.dataset.decision === data.decision);
+    });
     reasonText.textContent = `Reason: ${data.reason || "No reason was returned."}`;
     modelText.textContent = `Model: ${data.model_used || "Not provided"}`;
-    citationSummary.textContent = `${citedIds.size} citation${citedIds.size === 1 ? "" : "s"}`;
+    clearElement(citationSummary);
+    const citedChunks = retrieved.filter((chunk) => citedIds.has(chunk.id));
+    if (citedChunks.length) citedChunks.forEach((chunk) => citationSummary.append(citationChip(chunk.id)));
+    else citationSummary.textContent = "No citations";
+    renderTimings(data.timings_ms);
     reviewAlert.hidden = !data.needs_sme_review;
     clearElement(retrievedList);
     if (retrieved.length) retrieved.forEach((chunk) => retrievedList.append(sourceCard(chunk, citedIds.has(chunk.id))));
