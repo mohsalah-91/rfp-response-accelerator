@@ -1,5 +1,10 @@
+import asyncio
+from collections import deque
 import json
+import logging
 from pathlib import Path
+import random
+import time
 from typing import Literal, Optional, List
 import cohere
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,6 +20,46 @@ router = APIRouter(prefix="/documents", tags=["Documents"])
 
 # Async Cohere client for reranking (non-blocking, safe to call from async endpoints)
 cohere_client = cohere.AsyncClientV2(api_key=settings.COHERE_API_KEY)
+logger = logging.getLogger(__name__)
+
+
+class CohereRateLimiter:
+    """Process-wide sliding-window limiter for Cohere rerank requests."""
+
+    def __init__(self, requests_per_minute: int) -> None:
+        self.requests_per_minute = requests_per_minute
+        self._timestamps: deque[float] = deque()
+        self._lock = asyncio.Lock()
+
+    async def acquire(self) -> int:
+        """Wait for a request slot and return the time blocked in milliseconds."""
+        wait_started = time.perf_counter()
+        while True:
+            async with self._lock:
+                now = time.perf_counter()
+                while self._timestamps and now - self._timestamps[0] >= 60:
+                    self._timestamps.popleft()
+                if len(self._timestamps) < self.requests_per_minute:
+                    self._timestamps.append(now)
+                    return int((time.perf_counter() - wait_started) * 1000)
+                delay = max(0, 60 - (now - self._timestamps[0]))
+            await asyncio.sleep(delay)
+
+
+class CohereRateLimitExhaustedError(Exception):
+    """Raised when Cohere returns 429 for all permitted rerank attempts."""
+
+
+class HybridSearchTimings:
+    """Internal per-request timings collected without shared mutable state."""
+
+    def __init__(self) -> None:
+        self.retrieve = 0
+        self.rerank = 0
+        self.rerank_wait = 0
+
+
+cohere_rerank_limiter = CohereRateLimiter(settings.COHERE_RERANK_RPM)
 
 # Async OpenAI client for answer synthesis (non-blocking, safe to call from async endpoints)
 answer_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
@@ -50,6 +95,14 @@ class AnswerRequest(BaseModel):
     top_k: int = Field(3, ge=1, le=10, description="Max number of reranked chunks to use as context")
 
 
+class TimingsMs(BaseModel):
+    retrieve: int
+    rerank: int
+    rerank_wait: int
+    synthesize: int
+    total: int
+
+
 class AnswerResponse(BaseModel):
     query: str
     answer: str
@@ -59,6 +112,7 @@ class AnswerResponse(BaseModel):
     citations: List[int]
     needs_sme_review: bool
     reason: str
+    timings_ms: Optional[TimingsMs] = None
 
 
 # =====================================================================
@@ -146,7 +200,38 @@ async def ingest_document(
     }
 
 
-async def _hybrid_search_and_rerank(query: str, limit: int, pool) -> List[SearchResultResponse]:
+async def _rerank_with_rate_limit(query: str, candidates, doc_map, limit: int) -> tuple[object, int, int]:
+    """Rate-limit Cohere calls and retry only its documented 429 exception."""
+    rerank_ms = 0
+    wait_ms = 0
+    for attempt in range(1, 4):
+        wait_ms += await cohere_rerank_limiter.acquire()
+        started = time.perf_counter()
+        try:
+            response = await cohere_client.rerank(
+                model=settings.RERANK_MODEL,
+                query=query,
+                documents=[doc_map[doc_id]["content"] for doc_id, _ in candidates],
+                top_n=limit,
+            )
+            rerank_ms += int((time.perf_counter() - started) * 1000)
+            return response, rerank_ms, wait_ms
+        except cohere.errors.TooManyRequestsError as error:
+            rerank_ms += int((time.perf_counter() - started) * 1000)
+            if attempt == 3:
+                raise CohereRateLimitExhaustedError() from error
+            await asyncio.sleep((0.5 * (2 ** (attempt - 1))) + random.uniform(0, 0.25))
+        except Exception:
+            rerank_ms += int((time.perf_counter() - started) * 1000)
+            raise
+
+
+async def _hybrid_search_and_rerank(
+    query: str,
+    limit: int,
+    pool,
+    timings: Optional[HybridSearchTimings] = None,
+) -> List[SearchResultResponse]:
     """
     Executes Hybrid Search combining Dense Vector Search (pgvector) and
     Sparse Lexical Search (Postgres tsvector/BM25) using Reciprocal Rank Fusion (RRF),
@@ -155,6 +240,7 @@ async def _hybrid_search_and_rerank(query: str, limit: int, pool) -> List[Search
     candidate_fetch_limit = 20
     rrf_k = 60.0  # Standard smoothing constant for RRF
 
+    retrieve_started = time.perf_counter()
     # 1. Generate query embedding for vector path
     query_vector = await generate_query_embedding(query)
 
@@ -209,6 +295,8 @@ async def _hybrid_search_and_rerank(query: str, limit: int, pool) -> List[Search
         candidates = sorted_docs[:rerank_candidate_limit]
 
         if not candidates:
+            if timings is not None:
+                timings.retrieve = int((time.perf_counter() - retrieve_started) * 1000)
             return []
 
     except Exception as e:
@@ -217,18 +305,28 @@ async def _hybrid_search_and_rerank(query: str, limit: int, pool) -> List[Search
             detail=f"Hybrid search execution failed: {str(e)}"
         )
 
+    if timings is not None:
+        timings.retrieve = int((time.perf_counter() - retrieve_started) * 1000)
+
     # 5. Rerank the candidate pool with Cohere to sharpen relevance ordering
     try:
-        rerank_response = await cohere_client.rerank(
-            model=settings.RERANK_MODEL,
-            query=query,
-            documents=[doc_map[doc_id]["content"] for doc_id, _ in candidates],
-            top_n=limit
+        rerank_response, rerank_ms, rerank_wait = await _rerank_with_rate_limit(
+            query, candidates, doc_map, limit
         )
-    except Exception as e:
+        if timings is not None:
+            timings.rerank = rerank_ms
+            timings.rerank_wait = rerank_wait
+    except CohereRateLimitExhaustedError:
+        logger.exception("Cohere rerank rate limit exhausted after retries")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Cohere rerank endpoint failure: {str(e)}"
+            detail="Reranker rate limit exceeded after 3 retries",
+        )
+    except Exception:
+        logger.exception("Cohere rerank failed")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Reranker unavailable",
         )
 
     results = []
@@ -416,6 +514,20 @@ async def answer_query(
     chunks via hybrid search + Cohere reranking, then synthesizing a grounded
     answer with the OpenAI Responses API, citing the source chunks it drew from.
     """
+    total_started = time.perf_counter()
+    hybrid_timings = HybridSearchTimings()
     # Step A: Hybrid search + Cohere rerank to get the top N relevant chunks
-    retrieved_context = await _hybrid_search_and_rerank(payload.query, payload.top_k, pool)
-    return await _synthesize_answer(payload.query, retrieved_context)
+    retrieved_context = await _hybrid_search_and_rerank(
+        payload.query, payload.top_k, pool, hybrid_timings
+    )
+    synthesize_started = time.perf_counter()
+    response = await _synthesize_answer(payload.query, retrieved_context)
+    synthesize_ms = int((time.perf_counter() - synthesize_started) * 1000)
+    response.timings_ms = TimingsMs(
+        retrieve=hybrid_timings.retrieve,
+        rerank=hybrid_timings.rerank,
+        rerank_wait=hybrid_timings.rerank_wait,
+        synthesize=synthesize_ms,
+        total=int((time.perf_counter() - total_started) * 1000),
+    )
+    return response

@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
+from cohere.errors import TooManyRequestsError
 from fastapi import HTTPException
 from openai import APIError
 from openai.types.responses import ParsedResponse
@@ -20,7 +21,14 @@ os.environ.setdefault("COHERE_API_KEY", "test-cohere-key")
 from app.answer_models import GroundedAnswer
 from app.config import settings
 from app.main import app
-from app.router import SearchResultResponse, _synthesize_answer
+from app.router import (
+    AnswerRequest,
+    SearchResultResponse,
+    _rerank_with_rate_limit,
+    _synthesize_answer,
+    answer_query,
+    cohere_rerank_limiter,
+)
 
 
 class AnswerGenerationTests(unittest.IsolatedAsyncioTestCase):
@@ -106,6 +114,51 @@ class AnswerGenerationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(body["reason"], expected.reason)
         self.assertEqual(body["model_used"], settings.ANSWER_MODEL)
         self.assertEqual(body["retrieved_context"][0]["id"], 12)
+        self.assertEqual(body["retrieved_context"][0]["rerank_score"], 0.91)
+        self.assertEqual(
+            set(body["timings_ms"]),
+            {"retrieve", "rerank", "rerank_wait", "synthesize", "total"},
+        )
+        self.assertTrue(all(isinstance(value, int) for value in body["timings_ms"].values()))
+
+    async def test_rerank_retries_only_the_sdk_429_exception(self) -> None:
+        successful_response = SimpleNamespace(results=[])
+        with patch("app.router.cohere_rerank_limiter.acquire", new=AsyncMock(return_value=0)), patch(
+            "app.router.cohere_client.rerank",
+            new=AsyncMock(side_effect=[TooManyRequestsError(body={}), successful_response]),
+        ) as rerank, patch("app.router.asyncio.sleep", new=AsyncMock()) as sleep:
+            response, _, wait_ms = await _rerank_with_rate_limit(
+                "question", [(1, 0.1)], {1: {"content": "evidence"}}, 3
+            )
+
+        self.assertIs(response, successful_response)
+        self.assertEqual(wait_ms, 0)
+        self.assertEqual(rerank.await_count, 2)
+        sleep.assert_awaited_once()
+
+    async def test_total_timing_includes_nonzero_limiter_wait(self) -> None:
+        expected = self._answer()
+
+        async def hybrid_with_limiter_wait(query, limit, pool, timings):
+            timings.retrieve = 100
+            timings.rerank = 200
+            timings.rerank_wait = await cohere_rerank_limiter.acquire()
+            return self._context()
+
+        with patch("app.router.cohere_rerank_limiter.acquire", new=AsyncMock(return_value=4000)), patch(
+            "app.router._hybrid_search_and_rerank", new=AsyncMock(side_effect=hybrid_with_limiter_wait)
+        ), patch("app.router.answer_client.responses.parse", new=AsyncMock(return_value=self._response(expected))), patch(
+            "app.router.time.perf_counter", side_effect=[100.0, 104.5, 104.5, 105.0]
+        ):
+            response = await answer_query(AnswerRequest(query="How did revenue change?"), MagicMock())
+
+        self.assertIsNotNone(response.timings_ms)
+        timings = response.timings_ms
+        self.assertEqual(timings.rerank_wait, 4000)
+        self.assertGreaterEqual(
+            timings.total,
+            timings.retrieve + timings.rerank + timings.rerank_wait + timings.synthesize,
+        )
 
     async def test_rejects_invalid_citation_ids(self) -> None:
         await self._assert_invalid(self._answer(citations=[999]), "OpenAI returned citations outside the retrieved evidence.")
