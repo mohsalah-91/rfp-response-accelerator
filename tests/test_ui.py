@@ -36,7 +36,13 @@ class UserInterfaceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(script.status_code, 200)
         self.assertIn("javascript", script.headers["content-type"])
         self.assertIn('fetch("/documents/answer"', script.text)
+        self.assertIn('fetch("/documents/rfp-questions"', script.text)
         self.assertIn("textContent", script.text)
+        self.assertIn('role="tablist"', page.text)
+        self.assertIn("Single question", page.text)
+        self.assertIn("RFP batch", page.text)
+        self.assertIn("Process RFP", page.text)
+        self.assertIn("Download response document", page.text)
 
     async def test_existing_public_routes_remain_available(self) -> None:
         root = await self.client.get("/")
@@ -46,3 +52,12 @@ class UserInterfaceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(root.status_code, 200)
         self.assertEqual(health.status_code, 200)
         self.assertEqual(docs.status_code, 200)
+
+    async def test_rfp_questions_excludes_evaluation_labels(self) -> None:
+        response = await self.client.get("/documents/rfp-questions")
+
+        self.assertEqual(response.status_code, 200)
+        questions = response.json()
+        self.assertEqual(len(questions), 15)
+        self.assertTrue(all("expected_behavior" not in question for question in questions))
+        self.assertTrue(all(set(question) == {"id", "section", "question"} for question in questions))

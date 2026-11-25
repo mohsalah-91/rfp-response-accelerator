@@ -15,76 +15,56 @@
       <p class="intro">Draft a response from the synthetic Halebrook Systems knowledge base. Review the returned evidence before using any result.</p>
     </header>
 
-    <section class="panel question-panel" aria-labelledby="question-heading">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Start here</p>
-          <h2 id="question-heading">Ask a question</h2>
+    <div class="mode-tabs" role="tablist" aria-label="Response mode">
+      <button id="single-tab" class="mode-tab" type="button" role="tab" aria-selected="true" aria-controls="single-mode">Single question</button>
+      <button id="batch-tab" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="batch-mode" tabindex="-1">RFP batch</button>
+    </div>
+
+    <section id="single-mode" class="mode-panel" role="tabpanel" aria-labelledby="single-tab">
+      <section class="panel question-panel" aria-labelledby="question-heading">
+        <div class="section-heading">
+          <div><p class="eyebrow">Start here</p><h2 id="question-heading">Ask a question</h2></div>
+          <p class="field-note">A question must contain at least 3 characters.</p>
         </div>
-        <p class="field-note">A question must contain at least 3 characters.</p>
-      </div>
-
-      <div class="examples" aria-label="Example questions">
-        <p class="examples-label">Try an example</p>
-        <div class="example-list">
-          <button class="example-button" type="button" data-question="What deployment models are supported?">Deployment models</button>
-          <button class="example-button" type="button" data-question="Confirm that Halebrook holds FedRAMP Moderate authorization and provide the package identifier.">FedRAMP authorization</button>
-          <button class="example-button" type="button" data-question="Do you support Kubernetes admission controller integration for runtime policy enforcement?">Kubernetes integration</button>
+        <div class="examples" aria-label="Example questions">
+          <p class="examples-label">Try an example</p>
+          <div class="example-list">
+            <button class="example-button" type="button" data-question="What deployment models are supported?">Deployment models</button>
+            <button class="example-button" type="button" data-question="Confirm that Halebrook holds FedRAMP Moderate authorization and provide the package identifier.">FedRAMP authorization</button>
+            <button class="example-button" type="button" data-question="Do you support Kubernetes admission controller integration for runtime policy enforcement?">Kubernetes integration</button>
+          </div>
         </div>
-      </div>
-
-      <form id="answer-form" novalidate>
-        <label for="question">Question</label>
-        <textarea id="question" name="question" rows="5" minlength="3" required aria-describedby="question-help" placeholder="For example: What deployment models are supported?"></textarea>
-        <p id="question-help" class="field-note">The request is sent to this application only when you select Generate answer.</p>
-        <div class="form-actions">
-          <button id="submit-button" class="primary-button" type="submit">Generate answer</button>
-          <p id="request-status" class="request-status" role="status" aria-live="polite"></p>
-        </div>
-      </form>
-    </section>
-
-    <section id="error-panel" class="alert error-alert" role="alert" hidden>
-      <h2>Unable to generate an answer</h2>
-      <p id="error-message"></p>
-    </section>
-
-    <section id="results" class="results" aria-live="polite" hidden>
-      <div class="result-header">
-        <div>
-          <p class="eyebrow">Generated response</p>
-          <h2>Answer</h2>
-        </div>
-        <span id="decision-badge" class="decision-badge"></span>
-      </div>
-
-      <div id="review-alert" class="alert review-alert" hidden>
-        <h3>SME review required</h3>
-        <p>This indicator reports the response flag. It does not represent an approval workflow.</p>
-      </div>
-
-      <article class="panel answer-card">
-        <p id="answer-text" class="answer-text"></p>
-        <div class="metadata-grid">
-          <div><h3>Reason</h3><p id="reason-text"></p></div>
-          <div><h3>Model</h3><p id="model-text"></p></div>
-        </div>
-      </article>
-
-      <section class="evidence-section" aria-labelledby="citations-heading">
-        <div class="section-heading compact">
-          <div><p class="eyebrow">Supporting evidence</p><h2 id="citations-heading">Citations</h2></div>
-          <p id="citation-summary" class="field-note"></p>
-        </div>
-        <div id="citation-list" class="source-list"></div>
+        <form id="answer-form" novalidate>
+          <label for="question">Question</label>
+          <textarea id="question" name="question" rows="5" minlength="3" required aria-describedby="question-help" placeholder="For example: What deployment models are supported?"></textarea>
+          <p id="question-help" class="field-note">The request is sent to this application only when you select Generate answer.</p>
+          <div class="form-actions"><button id="submit-button" class="primary-button" type="submit">Generate answer</button><p id="request-status" class="request-status" role="status" aria-live="polite"></p></div>
+        </form>
       </section>
+      <section id="error-panel" class="alert error-alert" role="alert" hidden><h2>Unable to generate an answer</h2><p id="error-message"></p></section>
+      <section id="results" class="results" aria-live="polite" hidden>
+        <div class="result-header"><div><p class="eyebrow">Generated response</p><h2>Answer</h2></div><span id="decision-badge" class="decision-badge decision-badge-large"></span></div>
+        <div id="review-alert" class="alert review-alert" hidden><h3>SME review required</h3><p>This indicator reports the response flag. It does not represent an approval workflow.</p></div>
+        <article class="panel answer-card"><p id="answer-text" class="answer-text"></p><div class="metadata-row" aria-label="Response metadata"><span id="reason-text"></span><span id="model-text"></span><span id="citation-summary"></span></div></article>
+        <section class="evidence-section" aria-labelledby="retrieved-heading">
+          <div class="section-heading compact"><div><p class="eyebrow">Retrieved evidence</p><h2 id="retrieved-heading">Retrieved chunks</h2></div><p class="field-note">Cited sources appear first. Expand a chunk to read it; retrieval ordering and scores are not confidence measures.</p></div>
+          <div id="retrieved-list" class="source-list"></div>
+        </section>
+      </section>
+    </section>
 
-      <section class="evidence-section" aria-labelledby="retrieved-heading">
-        <div class="section-heading compact">
-          <div><p class="eyebrow">Retrieved evidence</p><h2 id="retrieved-heading">All retrieved chunks</h2></div>
-          <p class="field-note">Cited sources are marked below. Retrieval ordering and scores are not confidence measures.</p>
-        </div>
-        <div id="retrieved-list" class="source-list"></div>
+    <section id="batch-mode" class="mode-panel" role="tabpanel" aria-labelledby="batch-tab" hidden>
+      <section class="panel batch-panel" aria-labelledby="batch-heading">
+        <div class="section-heading"><div><p class="eyebrow">RFP batch</p><h2 id="batch-heading">Process a question set</h2></div><p class="field-note">Questions load from the sample set and can be edited before processing.</p></div>
+        <label for="batch-questions">Questions, one per line</label>
+        <textarea id="batch-questions" rows="12" aria-describedby="batch-help" placeholder="Loading RFP questions…"></textarea>
+        <p id="batch-help" class="field-note">Up to three requests are processed at a time.</p>
+        <div class="form-actions"><button id="process-batch" class="primary-button" type="button">Process RFP</button><button id="download-batch" class="secondary-button" type="button" disabled>Download response document</button><p id="batch-status" class="request-status" role="status" aria-live="polite"></p></div>
+      </section>
+      <section id="batch-results" class="results" aria-labelledby="batch-results-heading" hidden>
+        <div class="batch-results-heading"><div><p class="eyebrow">Batch results</p><h2 id="batch-results-heading">Responses</h2></div><label class="filter-toggle"><input id="review-filter" type="checkbox"> Needs SME review</label></div>
+        <p id="batch-summary" class="batch-summary" role="status" aria-live="polite"></p>
+        <div class="table-wrap"><table><thead><tr><th scope="col">Question</th><th scope="col">Decision</th><th scope="col">Answer preview</th><th scope="col">Citations</th><th scope="col">SME review</th><th scope="col"><span class="visually-hidden">Details</span></th></tr></thead><tbody id="batch-results-body"></tbody></table></div>
       </section>
     </section>
   </main>

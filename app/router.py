@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Literal, Optional, List
 import cohere
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -63,6 +64,31 @@ class AnswerResponse(BaseModel):
 # =====================================================================
 # ENDPOINTS
 # =====================================================================
+
+@router.get("/rfp-questions", status_code=status.HTTP_200_OK)
+async def get_rfp_questions():
+    """Return the public RFP questions without evaluation-only labels."""
+    questions_path = Path(__file__).resolve().parent.parent / "incoming-rfp" / "questions.jsonl"
+    if not questions_path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="RFP questions file is unavailable.",
+        )
+
+    questions = []
+    for line in questions_path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            record = json.loads(line)
+            questions.append(
+                {
+                    "id": record["id"],
+                    "section": record["section"],
+                    "question": record["question"],
+                }
+            )
+
+    return questions
+
 
 @router.post("/ingest", status_code=status.HTTP_201_CREATED)
 async def ingest_document(
