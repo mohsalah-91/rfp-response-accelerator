@@ -91,6 +91,18 @@ def run_metrics(results: list[dict[str, Any]], questions: list[dict[str, Any]]) 
     hits = sum(result["retrieval_hit"] for result in eligible_retrieval)
     mrr = mean([result["mrr"] for result in eligible_retrieval]) if eligible_retrieval else None
     return {
+        "attempted": len(results),
+        "failed": len(results) - len(successful),
+        "correct_over_all_attempted": {
+            "correct": correct,
+            "denominator": len(results),
+            "percentage": round((correct / len(results)) * 100, 2) if results else None,
+        },
+        "completed_accuracy": {
+            "correct": correct,
+            "denominator": len(successful),
+            "percentage": round((correct / len(successful)) * 100, 2) if successful else None,
+        },
         "decision_accuracy": {
             "correct": correct,
             "denominator": len(successful),
@@ -212,11 +224,14 @@ def print_headline(run_results: list[dict[str, Any]], stability: dict[str, Any] 
     print("\nEvaluation summary")
     for run in run_results:
         metrics = run["metrics"]
-        accuracy = metrics["decision_accuracy"]
-        percentage = "n/a" if accuracy["percentage"] is None else f"{accuracy['percentage']:.2f}%"
+        all_attempted = metrics["correct_over_all_attempted"]
+        completed = metrics["completed_accuracy"]
+        all_percentage = "n/a" if all_attempted["percentage"] is None else f"{all_attempted['percentage']:.2f}%"
+        completed_percentage = "n/a" if completed["percentage"] is None else f"{completed['percentage']:.2f}%"
         print(
-            f"Run {run['run']} decision accuracy: {accuracy['correct']}/{accuracy['denominator']} "
-            f"successful questions ({percentage}); failures: {metrics['failure_count']}"
+            f"Run {run['run']}: attempted={metrics['attempted']}; failed={metrics['failed']}; "
+            f"correct/all attempted={all_attempted['correct']}/{all_attempted['denominator']} ({all_percentage}); "
+            f"completed accuracy={completed['correct']}/{completed['denominator']} ({completed_percentage})"
         )
     if stability is not None:
         print(f"Decision stability: {stability['stable_count']}/{stability['total_questions']} fully stable questions")

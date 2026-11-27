@@ -31,6 +31,7 @@
   let requestInProgress = false;
   let batchInProgress = false;
   let batchResponses = [];
+  let batchQuestionCatalog = [];
 
   function clearElement(element) { element.replaceChildren(); }
 
@@ -189,20 +190,45 @@
   }
 
   async function requestAnswer(query) {
-    const response = await fetch("/documents/answer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, top_k: 3 })
-    });
-    let data = null;
-    try { data = await response.json(); } catch { /* A safe generic message follows. */ }
-    if (!response.ok) throw new Error(data && typeof data.detail === "string" ? data.detail : "The service could not generate an answer. Please try again later.");
-    return data || {};
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 45000);
+    try {
+      const response = await fetch("/documents/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, top_k: 3 }),
+        signal: controller.signal
+      });
+      let data = null;
+      try { data = await response.json(); } catch { /* A safe generic message follows. */ }
+      if (!response.ok) throw new Error(data && typeof data.detail === "string" ? data.detail : "The service could not generate an answer. Please try again later.");
+      return data || {};
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
   }
 
   function truncate(value, maximum = 180) {
     const text = value || "";
     return text.length > maximum ? `${text.slice(0, maximum - 1)}…` : text;
+  }
+
+  function safeBatchError() {
+    return "The application could not process this question. Check service availability and retry.";
+  }
+
+  function parseBatchQuestions() {
+    return batchQuestions.value.split(/\r?\n/).map((line, index) => {
+      const trimmed = line.trim();
+      if (!trimmed) return null;
+      const match = trimmed.match(/^([A-Za-z0-9_-]+):\s*(.+)$/);
+      const catalogItem = batchQuestionCatalog.find((item) => item.id === (match && match[1]));
+      return {
+        id: catalogItem ? catalogItem.id : match ? match[1] : `custom-${index + 1}`,
+        position: index + 1,
+        question: match ? match[2].trim() : trimmed,
+      };
+    }).filter(Boolean);
   }
 
   function batchDetail(data) {
@@ -231,7 +257,7 @@
     row.className = record.error ? "batch-row-error" : "batch-row";
     const questionCell = document.createElement("th");
     questionCell.scope = "row";
-    questionCell.textContent = record.question;
+    questionCell.textContent = `${record.id} — ${record.question}`;
     const decisionCell = document.createElement("td");
     const answerCell = document.createElement("td");
     const citationCell = document.createElement("td");
@@ -244,8 +270,30 @@
       citationCell.textContent = "—";
       reviewCell.textContent = "—";
       detailCell.textContent = "—";
-      batchResultsBody.append(row);
-      return { row, detailRow: null };
+      const expand = document.createElement("button");
+      expand.className = "details-button";
+      expand.type = "button";
+      expand.textContent = "Details";
+      expand.setAttribute("aria-expanded", "false");
+      const detailRow = document.createElement("tr");
+      detailRow.className = "batch-detail-row";
+      detailRow.hidden = true;
+      const detailContent = document.createElement("td");
+      detailContent.colSpan = 6;
+      const detail = document.createElement("div");
+      detail.className = "batch-detail";
+      detail.textContent = record.error;
+      detailContent.append(detail);
+      detailRow.append(detailContent);
+      expand.addEventListener("click", () => {
+        record.expanded = !record.expanded;
+        expand.setAttribute("aria-expanded", String(record.expanded));
+        expand.textContent = record.expanded ? "Hide details" : "Details";
+        applyReviewFilter();
+      });
+      detailCell.replaceChildren(expand);
+      batchResultsBody.append(row, detailRow);
+      return { row, detailRow, expandButton: expand };
     }
     const data = record.data;
     const badge = document.createElement("span");
@@ -269,14 +317,14 @@
     detailContent.append(batchDetail(data));
     detailRow.append(detailContent);
     expand.addEventListener("click", () => {
-      const expanded = expand.getAttribute("aria-expanded") === "true";
-      expand.setAttribute("aria-expanded", String(!expanded));
-      expand.textContent = expanded ? "Details" : "Hide details";
-      detailRow.hidden = expanded;
+      record.expanded = !record.expanded;
+      expand.setAttribute("aria-expanded", String(record.expanded));
+      expand.textContent = record.expanded ? "Hide details" : "Details";
+      applyReviewFilter();
     });
     detailCell.append(expand);
     batchResultsBody.append(row, detailRow);
-    return { row, detailRow };
+    return { row, detailRow, expandButton: expand };
   }
 
   function updateBatchSummary() {
@@ -290,22 +338,22 @@
     });
     const decisionText = Object.entries(decisions).map(([decision, count]) => `${decision}: ${count}`).join(" · ");
     batchSummary.textContent = `Processed ${batchResponses.length}. ${decisionText || "No completed answers yet."} SME review: ${reviewCount}.`;
-    downloadBatch.disabled = !batchResponses.some((record) => !record.error);
+    downloadBatch.disabled = batchResponses.length === 0;
     applyReviewFilter();
   }
 
   function applyReviewFilter() {
     const showOnlyReview = reviewFilter.checked;
     batchResponses.forEach((record) => {
-      const hidden = showOnlyReview && (!record.data || !record.data.needs_sme_review);
+      const hidden = showOnlyReview && !record.error && (!record.data || !record.data.needs_sme_review);
       record.row.hidden = hidden;
-      if (record.detailRow) record.detailRow.hidden = true;
+      if (record.detailRow) record.detailRow.hidden = hidden || !record.expanded;
     });
   }
 
   async function processBatchQuestions() {
     if (batchInProgress) return;
-    const questions = batchQuestions.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    const questions = parseBatchQuestions();
     if (!questions.length) {
       batchStatus.textContent = "Enter at least one question to process.";
       batchQuestions.focus();
@@ -323,11 +371,24 @@
     let nextIndex = 0;
     async function worker() {
       while (nextIndex < questions.length) {
-        const questionText = questions[nextIndex];
+        const questionEntry = questions[nextIndex];
         nextIndex += 1;
         let record;
-        try { record = { question: questionText, data: await requestAnswer(questionText) }; }
-        catch (error) { record = { question: questionText, error: error instanceof Error ? error.message : "The request failed." }; }
+        try {
+          record = {
+            ...questionEntry,
+            status: "completed",
+            data: await requestAnswer(questionEntry.question),
+            expanded: false,
+          };
+        } catch (error) {
+          record = {
+            ...questionEntry,
+            status: "failed",
+            error: safeBatchError(),
+            expanded: false,
+          };
+        }
         Object.assign(record, appendBatchRow(record));
         batchResponses.push(record);
         batchStatus.textContent = `Processing ${batchResponses.length} of ${questions.length} questions…`;
@@ -345,14 +406,71 @@
 
   function citedChunkTitles(data) {
     const citationIds = new Set(Array.isArray(data.citations) ? data.citations : []);
-    return (Array.isArray(data.retrieved_context) ? data.retrieved_context : []).filter((chunk) => citationIds.has(chunk.id)).map((chunk) => chunk.title || `Chunk ${chunk.id}`);
+    return (Array.isArray(data.retrieved_context) ? data.retrieved_context : []).filter((chunk) => citationIds.has(chunk.id));
+  }
+
+  function markdownFence(value) {
+    const text = String(value || "");
+    const matches = text.match(/`+/g) || [];
+    const longest = matches.reduce((length, match) => Math.max(length, match.length), 2);
+    const fence = "`".repeat(longest + 1);
+    return `${fence}\n${text}\n${fence}`;
+  }
+
+  function reviewPacketRecord(record) {
+    const lines = [
+      `## ${record.position}. ${record.id}`,
+      "",
+      "**Status:** " + record.status,
+      "",
+      "### Original question",
+      markdownFence(record.question),
+      "",
+    ];
+    if (record.error) {
+      lines.push("### Safe error information", markdownFence(record.error), "");
+      return lines;
+    }
+    const data = record.data || {};
+    lines.push(
+      "### Decision",
+      markdownFence(data.decision || "No decision"),
+      "",
+      "### SME review",
+      markdownFence(data.needs_sme_review ? "Required" : "Not flagged"),
+      "",
+      "### Reason",
+      markdownFence(data.reason || "No reason was returned."),
+      "",
+      "### Proposed answer",
+      markdownFence(data.answer || "No answer was returned."),
+      "",
+      "### Cited sources",
+    );
+    const sources = citedChunkTitles(data);
+    if (!sources.length) lines.push("No cited sources were returned.");
+    sources.forEach((chunk, sourceIndex) => {
+      lines.push(
+        `#### Cited source ${sourceIndex + 1}`,
+        "",
+        "Title:",
+        markdownFence(chunk.title || "Untitled source"),
+        "",
+        "Chunk ID:",
+        markdownFence(chunk.id),
+        "",
+        "Excerpt:",
+        markdownFence(truncate(chunk.content || "No excerpt was returned.", 700)),
+        "",
+      );
+    });
+    return lines;
   }
 
   function downloadResponseDocument() {
-    const lines = ["# RFP response document", ""];
-    batchResponses.filter((record) => !record.error).forEach((record) => {
-      const data = record.data;
-      lines.push(`## ${record.question}`, "", `**Decision:** ${data.decision || "No decision"}`, "", data.answer || "No answer was returned.", "", `**Cited chunks:** ${citedChunkTitles(data).join(", ") || "None"}`, "", `**SME review:** ${data.needs_sme_review ? "Yes" : "No"}`, "");
+    const lines = ["# DRAFT — Internal RFP Review Packet", "", "> Draft only. Validate proposed answers and source excerpts before external use.", ""];
+    [...batchResponses].sort((first, second) => first.position - second.position).forEach((record) => {
+      lines.push(...reviewPacketRecord(record));
     });
     const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -370,7 +488,8 @@
       const response = await fetch("/documents/rfp-questions");
       const data = await response.json();
       if (!response.ok || !Array.isArray(data)) throw new Error("Unable to load the RFP question set.");
-      batchQuestions.value = data.map((item) => item.question).filter((item) => typeof item === "string").join("\n");
+      batchQuestionCatalog = data.filter((item) => typeof item.id === "string" && typeof item.question === "string");
+      batchQuestions.value = batchQuestionCatalog.map((item) => `${item.id}: ${item.question}`).join("\n");
       batchStatus.textContent = `${data.length} RFP questions loaded. You can edit them before processing.`;
     } catch (error) {
       batchQuestions.placeholder = "Enter one RFP question per line.";

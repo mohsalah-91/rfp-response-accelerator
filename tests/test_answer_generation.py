@@ -91,12 +91,23 @@ class AnswerGenerationTests(unittest.IsolatedAsyncioTestCase):
     async def test_empty_retrieval_is_deterministic_and_does_not_call_openai(self) -> None:
         with patch("app.router.answer_client.responses.parse", new=AsyncMock()) as parse:
             result = await _synthesize_answer("How did revenue change?", [])
-        self.assertEqual(result.decision, "answer_partial")
+        self.assertEqual(result.decision, "refuse")
         self.assertEqual(result.citations, [])
         self.assertTrue(result.needs_sme_review)
-        self.assertIn("No supporting evidence", result.answer)
+        self.assertIn("No approved evidence", result.answer)
         self.assertEqual(result.retrieved_context, [])
         parse.assert_not_awaited()
+
+    async def test_partial_redirect_and_refuse_remain_distinct_decisions(self) -> None:
+        for decision, review_required in (("answer_partial", True), ("redirect", False), ("refuse", True)):
+            expected = self._answer(
+                decision=decision,
+                citations=[] if decision == "refuse" else [12],
+                needs_sme_review=review_required,
+            )
+            with patch("app.router.answer_client.responses.parse", new=AsyncMock(return_value=self._response(expected))):
+                result = await _synthesize_answer("Question?", self._context())
+            self.assertEqual(result.decision, decision)
 
     async def test_http_response_preserves_and_extends_contract(self) -> None:
         expected = self._answer()

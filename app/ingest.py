@@ -1,5 +1,7 @@
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timezone
+import asyncio
+import logging
 import openai
 from openai import AsyncOpenAI
 from fastapi import HTTPException
@@ -10,6 +12,7 @@ from app.config import settings
 
 # Initialize the asynchronous OpenAI client
 openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+logger = logging.getLogger(__name__)
 
 
 class HierarchicalIngestionPipeline:
@@ -142,13 +145,15 @@ class IngestionService:
         Sends enriched chunk strings to OpenAI to generate vector embeddings.
         """
         try:
-            response = await openai_client.embeddings.create(
-                model=settings.EMBEDDING_MODEL,
-                input=chunks
-            )
+            async with asyncio.timeout(settings.PROVIDER_TIMEOUT_SECONDS):
+                response = await openai_client.embeddings.create(
+                    model=settings.EMBEDDING_MODEL,
+                    input=chunks
+                )
             return [data.embedding for data in response.data]
-        except Exception as e:
-            raise Exception(f"Failed to generate embeddings from OpenAI: {str(e)}")
+        except Exception:
+            logger.error("Document embedding request failed")
+            raise RuntimeError("Document embedding request failed") from None
 
 
 async def generate_query_embedding(query_text: str) -> List[float]:
@@ -156,13 +161,15 @@ async def generate_query_embedding(query_text: str) -> List[float]:
     Generates a single vector embedding for a user's search query.
     """
     try:
-        response = await openai_client.embeddings.create(
-            model=settings.EMBEDDING_MODEL,
-            input=query_text
-        )
+        async with asyncio.timeout(settings.PROVIDER_TIMEOUT_SECONDS):
+            response = await openai_client.embeddings.create(
+                model=settings.EMBEDDING_MODEL,
+                input=query_text
+            )
         return response.data[0].embedding
-    except Exception as e:
+    except Exception:
+        logger.error("Query embedding request failed")
         raise HTTPException(
-            status_code=500,
-            detail=f"OpenAI embedding search failure: {str(e)}"
+            status_code=502,
+            detail="Embedding service is currently unavailable."
         )

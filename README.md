@@ -30,7 +30,7 @@ Retrieval stays in the application and PostgreSQL. The application does not use 
 | PostgreSQL + pgvector | Persistent document chunks, vector similarity, and full-text retrieval |
 | OpenAI embeddings | Document and query vectors; default `text-embedding-3-small` |
 | Cohere | Reranking; default `rerank-v3.5` |
-| OpenAI Responses API | Answer synthesis; default `gpt-5` |
+| OpenAI Responses API | Answer synthesis; configurable default `gpt-5.6-sol` |
 | Pydantic | Structured generation schema and response validation |
 
 ## Local setup
@@ -79,11 +79,15 @@ Edit it locally. Do not commit or share real credentials.
 | --- | --- |
 | `POSTGRES_PASSWORD` | Password used when initializing the local database |
 | `DATABASE_URL` | Connection string matching the database user, password, host port, and name |
+| `ENVIRONMENT` | Application environment; default `development` |
+| `LOG_LEVEL` | Application log threshold; default `INFO` |
 | `OPENAI_API_KEY` | Used for embeddings and Responses |
 | `COHERE_API_KEY` | Used for reranking |
-| `ANSWER_MODEL` | Responses-compatible model; default `gpt-5` |
+| `ANSWER_MODEL` | Responses-compatible model; default `gpt-5.6-sol` |
 | `EMBEDDING_MODEL` | Default `text-embedding-3-small`; database vectors are 1536-dimensional |
 | `RERANK_MODEL` | Default `rerank-v3.5` |
+| `COHERE_RERANK_RPM` | Process-wide Cohere rerank limit; default `10`, bounded 1–1000 |
+| `PROVIDER_TIMEOUT_SECONDS` | Per-provider-call timeout; default `30`, bounded 1–120 |
 
 Match the **host port in your checked-in `docker-compose.yml`**. For an isolated database using `5433:5432`, the URL has this shape:
 
@@ -115,6 +119,10 @@ The health endpoint is a liveness check, not a complete provider-readiness test.
 
 After starting the API, open http://127.0.0.1:8000/ui in a browser. Enter an RFP question or select an example, then choose **Generate answer**. The interface sends the question to the local `/documents/answer` endpoint with `top_k: 3`, shows the drafted answer, returned decision, and reason, and lets you expand cited sources and all retrieved evidence. The SME-review indicator reports the response flag; it is not an approval workflow. FastAPI serves this UI and its static assets directly, so no separate frontend server or build step is needed. Use `/docs` instead when you prefer the interactive API.
 
+The **RFP batch** view loads all 15 labeled questions as `qNN: question` lines, preserving their IDs and positions while at most three requests run concurrently. Its **Download response document** action creates a local **DRAFT — Internal RFP Review Packet** containing every processed row, including failures, independent of the SME-review filter. Each successful row includes the question, decision, reason, proposed answer, SME flag, and cited source title, chunk ID, and excerpt. This export is an artifact for review, not an approval, routing, notification, or persistence workflow.
+
+For a short rehearsal, use `q02` (identity answer), `q11` (explicit FedRAMP negative), and `q07` (partial self-managed infrastructure answer). Keep all 15 labeled questions available for normal batch and evaluation use.
+
 ### 4. Ingest once
 
 Keep the API running and open another terminal using the same virtual environment.
@@ -131,7 +139,7 @@ If empty, ingest:
 python scripts/ingest_corpus.py
 ```
 
-Inspect the summary for zero failures; the script can exit normally even when individual documents fail. It skips very short documents. Chunk counts depend on corpus contents and splitting; they are not document counts.
+Inspect the summary for zero failures. The script walks every tracked Markdown document, posts each relative POSIX title (for example, `rfp-responses/data-residency-and-privacy.md`), and prints document and chunk totals. Chunk counts depend on corpus contents and splitting; they are not document counts.
 
 **Ingestion is not idempotent.** Repeating it inserts duplicates. Do not reingest merely to restart the API or change answer-generation instructions.
 
@@ -149,6 +157,7 @@ Tokenizer initialization is deferred until chunking is needed. First ingestion m
 | --- | --- |
 | `GET /health` | Liveness |
 | `GET /` | Application metadata |
+| `GET /documents/rfp-questions` | Public question IDs, sections, and text only; evaluation labels are withheld |
 | `POST /documents/ingest` | Chunk, embed, and persist a document |
 | `POST /documents/search` | Retrieve and rerank source chunks |
 | `POST /documents/answer` | Retrieve evidence and generate a structured answer |
@@ -174,14 +183,15 @@ The answer endpoint returns:
 | `citations` | IDs of supporting retrieved chunks |
 | `needs_sme_review` | Whether subject-matter-expert review is required |
 | `reason` | Brief evidence/policy justification, not internal reasoning |
+| `timings_ms` | Retrieve, rerank, limiter-wait, synthesis, and total latency in milliseconds |
 
 | Decision | Meaning |
 | --- | --- |
 | `answer` | Evidence supports the requested answer |
 | `answer_negative` | Evidence explicitly establishes non-support or an unavailable capability |
-| `answer_partial` | Evidence supports only part of the requested answer |
-| `redirect` | An evidenced policy assigns the request to another owner |
-| `refuse` | No supporting evidence or an applicable policy prohibits the requested response |
+| `answer_partial` | Evidence supports a portion of the question but leaves a real unresolved gap |
+| `redirect` | An evidenced policy assigns the request to another owner or response section |
+| `refuse` | Insufficient approved evidence supports no draft answer; SME review is required |
 
 These labels follow `incoming-rfp/questions.jsonl`. Missing evidence is not evidence that a capability is unavailable. A documented product-specific limitation can be explained as part of a complete answer.
 
@@ -189,9 +199,13 @@ These labels follow `incoming-rfp/questions.jsonl`. Missing evidence is not evid
 
 The official async SDK uses `responses.parse(..., text_format=GroundedAnswer)` to generate a schema-constrained response. Trusted rules are separate from the question and retrieved document content. Response storage is disabled with `store=False`; this is not a claim of zero data retention across providers.
 
-The application checks completion, provider refusal, parsed output, required text, citation membership, and applicable review rules. Invalid upstream answers produce sanitized HTTP 502 responses. Empty retrieval returns a deterministic review-required refusal without calling the answer model.
+The application checks completion, provider refusal, parsed output, required text, citation membership, and applicable review rules. Provider, embedding, database, rerank, and ingest failures are surfaced with short public messages rather than raw exception details. Empty retrieval returns a deterministic review-required `refuse` without calling the answer model.
 
 A provider safety refusal is distinct from the application's business decision `refuse`.
+
+### Retrieval query order
+
+The established hybrid retrieval design is unchanged. For each request, the application embeds the question, runs the dense pgvector query first (`ORDER BY embedding <=> query_vector LIMIT 20`), then runs PostgreSQL lexical retrieval (`fts_tokens @@ websearch_to_tsquery('english', query)`, ordered by `ts_rank_cd` and limited to 20). It fuses the ranked lists with RRF (`k=60`), takes up to 20 fused candidates, and sends them to Cohere for reranking before returning `top_k`. Cohere calls share the configured process-wide requests-per-minute limiter. This ordering and the RRF candidate depth are implementation details, not a claim that titles, scores, or citations establish passage coverage.
 
 ## Validation
 
@@ -218,6 +232,14 @@ python -m eval.run_eval --runs 3 --top-k 5 --out eval/results.json
 ```
 
 The evaluator opens and closes its own database pool; the FastAPI server does not need to be running. It prints progress because each question makes live embedding, Cohere reranking, and answer-synthesis calls. The output reports decision accuracy over successful questions, expected-versus-returned decision counts, retrieval hit rate and MRR for questions with expected sources, top rerank-score means for answerable versus non-answerable labels, and latency percentiles. Repeated runs also report decision stability and list questions whose decisions varied. The JSON artifact includes every per-question result and per-run aggregate for comparison across changes. This is a live evaluation with provider costs, not a mocked test.
+
+Each run now also states total attempted, failed, correct over all attempted, and completed accuracy. Failed questions remain visible but are excluded only from completed accuracy. Title hits and decision accuracy are retrieval and label checks; neither demonstrates that a passage covers every claim or that a cited passage factually supports the drafted answer.
+
+`eval/results.json` is a saved historical baseline, not a live guarantee. Its recorded model is reported in the artifact's per-question `model_used` fields; it must not be conflated with the configurable `ANSWER_MODEL` default. Do not regenerate it during a rehearsal unless live provider calls and the resulting cost are explicitly intended.
+
+### Recorded, provider-free rehearsal handoff
+
+For a portable recorded rehearsal, use `eval/results.json` without PostgreSQL or provider credentials. Select the saved records for `q02`, `q11`, and `q07`, then paste or upload the resulting internal review packet to a shared ChatGPT Business Project as a **recorded synthetic demonstration**. The expected outcomes are `answer`, `answer_negative`, and `answer_partial` respectively. This is a collaboration setup, not an implemented integration: the proposal manager prepares the draft packet, Architecture reviews technical scope and cited excerpts, and Compliance reviews certifications and policy language before external use. No formal approval, Project automation, MCP service, or notification workflow is implemented here.
 
 ## Try the application
 
@@ -257,7 +279,8 @@ Retrieval and generation can vary. Compare actual responses with the source pass
 - Prompt instructions reduce document-injection risk but do not eliminate it.
 - SME review is a returned flag; no approval queue or notification workflow is implemented.
 - Relevance gating is handled by the model's `decision` field rather than a numeric reranker threshold: reranker relevance scores are not calibrated probabilities, and a threshold tuned on the 15-question sample would overfit.
-- The supplied question dataset is not an implemented evaluation runner. Systematic retrieval and decision evaluation is future work.
+- The evaluator measures labeled title retrieval and decision behavior, not passage-level coverage, entailment, or legal approval.
+- `q13` is a pricing-policy redirect miss, `q05` lacks required residency passages, and `q06` lacks the Gate deployment section. Treat them as held-out evaluation-design inputs rather than silently changing retrieval around a 15-question set.
 - Ingestion can create duplicates; no document-versioning or refresh workflow is implemented.
 - This is a local prototype without production authentication, tenant isolation, deployment hardening, or an elaborate frontend.
 - API usage incurs provider costs. Only send content you are authorized to share with those providers.

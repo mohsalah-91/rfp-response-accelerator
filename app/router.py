@@ -62,7 +62,10 @@ class HybridSearchTimings:
 cohere_rerank_limiter = CohereRateLimiter(settings.COHERE_RERANK_RPM)
 
 # Async OpenAI client for answer synthesis (non-blocking, safe to call from async endpoints)
-answer_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+answer_client = AsyncOpenAI(
+    api_key=settings.OPENAI_API_KEY,
+    timeout=settings.PROVIDER_TIMEOUT_SECONDS,
+)
 
 
 # =====================================================================
@@ -153,11 +156,18 @@ async def ingest_document(
     Accepts raw enterprise documents, runs hierarchical structural chunking,
     generates 1536-dimension vectors from enriched context, and persists them into pgvector.
     """
-    chunks = IngestionService.chunk_text(
-        text=payload.content,
-        doc_id=payload.doc_id or "doc",
-        source_path=payload.source_path or "raw_input"
-    )
+    try:
+        chunks = IngestionService.chunk_text(
+            text=payload.content,
+            doc_id=payload.doc_id or "doc",
+            source_path=payload.source_path or "raw_input"
+        )
+    except Exception:
+        logger.error("Document chunking failed")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Document ingestion is currently unavailable.",
+        )
     
     if not chunks:
         raise HTTPException(
@@ -169,30 +179,35 @@ async def ingest_document(
     
     try:
         embeddings = await IngestionService.generate_embeddings(enriched_texts)
-    except Exception as e:
+    except Exception:
+        logger.error("Document embedding request failed")
         raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY, 
-            detail=f"OpenAI embedding endpoint failure: {str(e)}"
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Embedding service is currently unavailable."
         )
         
-    async with pool.connection() as conn:
-        async with conn.cursor() as cur:
-            try:
-                for chunk, vector in zip(chunks, embeddings):
-                    await cur.execute(
-                        """
-                        INSERT INTO document_chunks (title, chunk_index, content, embedding)
-                        VALUES (%s, %s, %s, %s);
-                        """,
-                        (payload.title, chunk["chunk_index"], chunk["content"], vector)
-                    )
-                await conn.commit()
-            except Exception as db_err:
-                await conn.rollback()
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Database transaction aborted: {str(db_err)}"
-                )
+    try:
+        async with pool.connection() as conn:
+            async with conn.cursor() as cur:
+                try:
+                    for chunk, vector in zip(chunks, embeddings):
+                        await cur.execute(
+                            """
+                            INSERT INTO document_chunks (title, chunk_index, content, embedding)
+                            VALUES (%s, %s, %s, %s);
+                            """,
+                            (payload.title, chunk["chunk_index"], chunk["content"], vector)
+                        )
+                    await conn.commit()
+                except Exception:
+                    await conn.rollback()
+                    raise
+    except Exception:
+        logger.error("Document ingestion database operation failed")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Document ingestion is currently unavailable.",
+        )
 
     return {
         "message": "Document successfully ingested with hierarchical context",
@@ -208,12 +223,13 @@ async def _rerank_with_rate_limit(query: str, candidates, doc_map, limit: int) -
         wait_ms += await cohere_rerank_limiter.acquire()
         started = time.perf_counter()
         try:
-            response = await cohere_client.rerank(
-                model=settings.RERANK_MODEL,
-                query=query,
-                documents=[doc_map[doc_id]["content"] for doc_id, _ in candidates],
-                top_n=limit,
-            )
+            async with asyncio.timeout(settings.PROVIDER_TIMEOUT_SECONDS):
+                response = await cohere_client.rerank(
+                    model=settings.RERANK_MODEL,
+                    query=query,
+                    documents=[doc_map[doc_id]["content"] for doc_id, _ in candidates],
+                    top_n=limit,
+                )
             rerank_ms += int((time.perf_counter() - started) * 1000)
             return response, rerank_ms, wait_ms
         except cohere.errors.TooManyRequestsError as error:
@@ -299,10 +315,13 @@ async def _hybrid_search_and_rerank(
                 timings.retrieve = int((time.perf_counter() - retrieve_started) * 1000)
             return []
 
-    except Exception as e:
+    except HTTPException:
+        raise
+    except Exception:
+        logger.error("Retrieval database operation failed")
         raise HTTPException(
-            status_code=500,
-            detail=f"Hybrid search execution failed: {str(e)}"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Retrieval is currently unavailable.",
         )
 
     if timings is not None:
@@ -317,13 +336,13 @@ async def _hybrid_search_and_rerank(
             timings.rerank = rerank_ms
             timings.rerank_wait = rerank_wait
     except CohereRateLimitExhaustedError:
-        logger.exception("Cohere rerank rate limit exhausted after retries")
+        logger.error("Cohere rerank rate limit exhausted after retries")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Reranker rate limit exceeded after 3 retries",
         )
     except Exception:
-        logger.exception("Cohere rerank failed")
+        logger.error("Cohere rerank failed")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Reranker unavailable",
@@ -365,13 +384,13 @@ async def _synthesize_answer(query: str, retrieved_context: List[SearchResultRes
     if not retrieved_context:
         return AnswerResponse(
             query=query,
-            answer="No supporting evidence was retrieved, so no substantive answer is supported.",
+            answer="No approved evidence was retrieved, so no draft answer is supported.",
             retrieved_context=[],
             model_used=settings.ANSWER_MODEL,
-            decision="answer_partial",
+            decision="refuse",
             citations=[],
             needs_sme_review=True,
-            reason="No supporting evidence was retrieved; SME review is required.",
+            reason="Insufficient approved evidence was retrieved; SME review is required.",
         )
 
     # Step B: Keep behavioral rules separate from untrusted question and evidence.
@@ -411,16 +430,17 @@ async def _synthesize_answer(query: str, retrieved_context: List[SearchResultRes
 
     # Step C: Call the OpenAI Responses API to synthesize the grounded answer.
     try:
-        response = await answer_client.responses.parse(
-            model=settings.ANSWER_MODEL,
-            instructions=system_prompt,
-            input=answer_input,
-            text_format=GroundedAnswer,
-            # This cap covers GPT-5 reasoning tokens as well as visible answer tokens.
-            max_output_tokens=4096,
-            store=False,
-        )
-    except APIError:
+        async with asyncio.timeout(settings.PROVIDER_TIMEOUT_SECONDS):
+            response = await answer_client.responses.parse(
+                model=settings.ANSWER_MODEL,
+                instructions=system_prompt,
+                input=answer_input,
+                text_format=GroundedAnswer,
+                # This cap covers GPT-5 reasoning tokens as well as visible answer tokens.
+                max_output_tokens=4096,
+                store=False,
+            )
+    except (APIError, TimeoutError):
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="OpenAI answer synthesis is currently unavailable."

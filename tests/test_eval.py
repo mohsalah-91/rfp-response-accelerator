@@ -38,6 +38,10 @@ class EvaluationMetricsTests(unittest.TestCase):
         self.assertEqual(metrics["retrieval"]["hits"], 1)
         self.assertEqual(metrics["retrieval"]["mrr"], 1.0)
         self.assertEqual(metrics["decision_accuracy"]["denominator"], 2)
+        self.assertEqual(metrics["attempted"], 2)
+        self.assertEqual(metrics["failed"], 0)
+        self.assertEqual(metrics["correct_over_all_attempted"]["denominator"], 2)
+        self.assertEqual(metrics["completed_accuracy"]["denominator"], 2)
 
     def test_stability_marks_failed_or_changed_decisions_unstable(self) -> None:
         questions = [
@@ -54,3 +58,28 @@ class EvaluationMetricsTests(unittest.TestCase):
         self.assertEqual(summary["stable_count"], 1)
         self.assertEqual(summary["unstable_questions"][0]["id"], "q2")
         self.assertEqual(summary["unstable_questions"][0]["decisions"], ["answer", "refuse"])
+
+    def test_attempted_and_completed_accuracy_keep_failures_separate(self) -> None:
+        questions = [
+            {"id": "q1", "expected_behavior": "answer"},
+            {"id": "q2", "expected_behavior": "refuse"},
+        ]
+        results = [
+            {
+                "id": "q1", "expected_behavior": "answer", "expected_source": ["source.md"],
+                "decision": "answer", "retrieval_hit": True, "mrr": 1.0,
+                "retrieved_context": [{"rerank_score": 0.9}],
+                "timings_ms": {"retrieve": 1, "rerank": 2, "synthesize": 3, "total": 6},
+            },
+            {
+                "id": "q2", "expected_behavior": "refuse", "expected_source": [],
+                "error": "provider unavailable",
+            },
+        ]
+
+        metrics = run_metrics(results, questions)
+
+        self.assertEqual(metrics["attempted"], 2)
+        self.assertEqual(metrics["failed"], 1)
+        self.assertEqual(metrics["correct_over_all_attempted"], {"correct": 1, "denominator": 2, "percentage": 50.0})
+        self.assertEqual(metrics["completed_accuracy"], {"correct": 1, "denominator": 1, "percentage": 100.0})

@@ -67,7 +67,7 @@
         <div class="section-heading"><div><p class="eyebrow">RFP batch</p><h2 id="batch-heading">Process a question set</h2></div><p class="field-note">Questions load from the sample set and can be edited before processing.</p></div>
         <label for="batch-questions">Questions, one per line</label>
         <textarea id="batch-questions" rows="12" aria-describedby="batch-help" placeholder="Loading RFP questions…"></textarea>
-        <p id="batch-help" class="field-note">Up to three requests are processed at a time.</p>
+        <p id="batch-help" class="field-note">Use <code>q01: Question text</code> to retain a labeled question ID. Up to three requests are processed at a time.</p>
         <div class="form-actions"><button id="process-batch" class="primary-button" type="button">Process RFP</button><button id="download-batch" class="secondary-button" type="button" disabled>Download response document</button><p id="batch-status" class="request-status" role="status" aria-live="polite"></p></div>
       </section>
       <section id="batch-results" class="results" aria-labelledby="batch-results-heading" hidden>
