@@ -1,0 +1,2803 @@
+{
+  "configuration": {
+    "runs": 3,
+    "top_k": 3,
+    "question_path": "incoming-rfp\\questions.jsonl"
+  },
+  "runs": [
+    {
+      "run": 1,
+      "results": [
+        {
+          "id": "q01",
+          "section": "Security",
+          "question": "What encryption standards are used to protect data at rest and in transit?",
+          "expected_source": [
+            "rfp-responses/security-architecture.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Data is protected using:\n\n- **At rest:** AES-256 in GCM mode across primary databases, object storage, backups, and snapshots. Encryption is enabled by default and cannot be disabled. Keys rotate automatically every 90 days.\n- **In transit:** TLS 1.3 for all external connections. TLS 1.2 is allowed only for named legacy integrations upon written request, while TLS 1.1 and SSLv3 are refused. Internal service-to-service traffic uses mutual TLS, with certificates rotated every 30 days.",
+          "reason": "The security architecture documentation specifies the encryption standards and rotation practices for both data at rest and data in transit.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            104,
+            105
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 104,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is customer data encrypted at rest?  \nAll customer data at rest is encrypted using AES-256 in GCM mode. This applies to primary databases, object storage, backups, and snapshots. Encryption is enabled by default on every tenant and cannot be disabled.  \nKey rotation occurs automatically every 90 days. Previous key versions are retained for the duration of the backup retention window so that historical restores remain possible.",
+              "chunk_index": 1,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.744081
+            },
+            {
+              "id": 105,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is data encrypted in transit?  \nAll external connections require TLS 1.3. TLS 1.2 is accepted only for named legacy integrations and must be requested in writing. Older protocol versions, including TLS 1.1 and SSLv3, are refused at the load balancer.  \nInternal service-to-service traffic within the Northwind platform is encrypted with mutual TLS, with certificates issued by an internal certificate authority and rotated every 30 days.",
+              "chunk_index": 2,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.583797
+            },
+            {
+              "id": 22,
+              "title": "compliance/subprocessors.md",
+              "content": "## Platform services  \nCloudflare provides edge termination and denial of service protection in all regions. Data processed: connection metadata, no customer content at rest.  \nTwilio provides transactional SMS for multi-factor authentication where a customer has enabled SMS as a factor. Data processed: phone number and one-time code. US only.  \nSendGrid provides transactional email. Data processed: recipient address and message content for notifications. US only.",
+              "chunk_index": 2,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.087167
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 4095,
+            "rerank": 296,
+            "rerank_wait": 0,
+            "synthesize": 2912,
+            "total": 7306
+          }
+        },
+        {
+          "id": "q02",
+          "section": "Identity",
+          "question": "Which single sign-on standards do you support, and is automated user provisioning available?",
+          "expected_source": [
+            "rfp-responses/identity-and-access.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Northwind supports SAML 2.0 and OpenID Connect (OIDC) for single sign-on. Both are included on all paid tiers at no additional cost.\n\nAutomated user provisioning and deprovisioning are available through SCIM 2.0. Identity provider groups can be mapped to Northwind roles, and SCIM deprovisioning revokes active sessions within 60 seconds.",
+          "reason": "The supplied identity and access documentation directly specifies the supported SSO standards and SCIM provisioning capabilities.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            82,
+            83
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 83,
+              "title": "rfp-responses/identity-and-access.md",
+              "content": "## Is automated user provisioning supported?  \nYes. Northwind supports SCIM 2.0 for automated provisioning and deprovisioning. Group membership from the identity provider can be mapped to Northwind roles, so access changes in the directory propagate without administrator action.  \nDeprovisioning through SCIM revokes active sessions within 60 seconds.",
+              "chunk_index": 2,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.816655
+            },
+            {
+              "id": 82,
+              "title": "rfp-responses/identity-and-access.md",
+              "content": "## What single sign-on standards are supported?  \nNorthwind supports SAML 2.0 and OpenID Connect for single sign-on. Both are available on all paid tiers at no additional cost.  \nTested and documented integrations exist for Okta, Microsoft Entra ID, Ping Identity, Google Workspace, and JumpCloud. Any identity provider conforming to SAML 2.0 or OIDC will work; the named providers simply have published setup guides.",
+              "chunk_index": 1,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.759601
+            },
+            {
+              "id": 85,
+              "title": "rfp-responses/identity-and-access.md",
+              "content": "## Is multi-factor authentication enforced?  \nWhen single sign-on is configured, multi-factor authentication is enforced by the customer's identity provider and Northwind honors that assertion.  \nFor customers not using single sign-on, Northwind enforces time-based one-time password authentication on all administrator accounts. This cannot be disabled. MFA on non-administrator local accounts is configurable per tenant and enabled by default.",
+              "chunk_index": 4,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.081908
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 263,
+            "rerank": 179,
+            "rerank_wait": 0,
+            "synthesize": 2461,
+            "total": 2904
+          }
+        },
+        {
+          "id": "q03",
+          "section": "Service Levels",
+          "question": "State your monthly uptime commitment and the service credits that apply if it is missed.",
+          "expected_source": [
+            "rfp-responses/availability-and-sla.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Monthly uptime commitments are:\n- Standard and Professional tiers: 99.9%\n- Enterprise tier: 99.95%\n\nIf monthly availability falls below the applicable commitment, service credits apply against the following month\u2019s fees:\n- Below the commitment, but at or above 99.0%: 10%\n- Below 99.0%: 25%\n- Below 95.0%: 50%\n\nCredits are the sole remedy for availability shortfalls and must be requested within 30 days of the affected month. Uptime is measured using one-minute intervals during which the API and console are reachable and return successful responses. Scheduled maintenance is excluded.",
+          "reason": "The SLA evidence specifies tier-based monthly uptime commitments, measurement terms, credit thresholds, and the claim deadline.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            61,
+            62
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 62,
+              "title": "rfp-responses/availability-and-sla.md",
+              "content": "## What service credits apply if you miss the commitment?  \nCredits are applied against the following month's fees: 10% for availability below the commitment but at or above 99.0%, 25% below 99.0%, and 50% below 95.0%.  \nCredits are the sole remedy for availability shortfalls. A customer must request credits within 30 days of the affected month.",
+              "chunk_index": 2,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.782547
+            },
+            {
+              "id": 61,
+              "title": "rfp-responses/availability-and-sla.md",
+              "content": "## What uptime do you commit to?  \nThe Standard and Professional tiers carry a 99.9% monthly uptime commitment. The Enterprise tier carries 99.95%.  \nUptime is measured as the percentage of one-minute intervals in a calendar month during which the API and console are reachable and returning successful responses. Scheduled maintenance is excluded, and scheduled maintenance has not exceeded two hours per quarter in the last eight quarters.",
+              "chunk_index": 1,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.526563
+            },
+            {
+              "id": 11,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "## How to answer a certification question  \nState only what is held. Where something is not held, say so plainly and offer the nearest equivalent evidence. Do not describe a roadmap item as though it were current, and do not commit to a certification date.",
+              "chunk_index": 4,
+              "rrf_score": 0.013158,
+              "rerank_score": 0.066794
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 301,
+            "rerank": 1232,
+            "rerank_wait": 0,
+            "synthesize": 2310,
+            "total": 3845
+          }
+        },
+        {
+          "id": "q04",
+          "section": "Data Residency",
+          "question": "In which geographic regions can our data be stored, and does any data leave the region we select?",
+          "expected_source": [
+            "rfp-responses/data-residency-and-privacy.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Data can be stored in one of six customer-selected home regions:\n\n- US East (Virginia)\n- US West (Oregon)\n- EU Central (Frankfurt)\n- EU West (Dublin)\n- APAC Southeast (Singapore)\n- APAC South (Sydney)\n\nCustomer content, backups, and telemetry remain in the selected home region. Customer content does not leave that region. However, three limited categories of operational metadata are processed in US East regardless of the selected region: aggregate billing usage counters, platform health metrics, and support case metadata. This metadata does not include customer content, asset names, network addresses, or user identities.\n\nThe home region is selected during provisioning and cannot later be changed without a migration engagement.",
+          "reason": "The approved evidence identifies all available storage regions and clearly distinguishes region-resident customer data from limited operational metadata processed in US East.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            68,
+            69
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 68,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## In which regions can our data be stored?  \nNorthwind operates in six regions: US East (Virginia), US West (Oregon), EU Central (Frankfurt), EU West (Dublin), APAC Southeast (Singapore), and APAC South (Sydney).  \nThe customer selects a home region at provisioning. All customer data, including backups and telemetry, remains within that region. Region cannot be changed after provisioning without a migration engagement.",
+              "chunk_index": 1,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.849785
+            },
+            {
+              "id": 69,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## Does any customer data leave the selected region?  \nCustomer content does not leave the home region. Three categories of operational metadata are processed in US East regardless of home region: aggregate usage counters for billing, platform health metrics, and support case metadata.  \nNone of these contain customer content, asset names, network addresses, or user identities. A full schema of what is replicated is available under NDA.",
+              "chunk_index": 2,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.688238
+            },
+            {
+              "id": 21,
+              "title": "compliance/subprocessors.md",
+              "content": "## Infrastructure  \nAmazon Web Services provides compute, storage, and networking for US East, US West, EU West, and APAC Southeast. Data processed: all customer content in those regions.  \nMicrosoft Azure provides compute, storage, and networking for EU Central and APAC South. Data processed: all customer content in those regions.  \nBoth are engaged under their standard data processing terms with Standard Contractual Clauses where applicable.",
+              "chunk_index": 1,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.32963
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 178,
+            "rerank": 154,
+            "rerank_wait": 0,
+            "synthesize": 3793,
+            "total": 4127
+          }
+        },
+        {
+          "id": "q05",
+          "section": "Data Residency",
+          "question": "We require hosting in Germany with no customer data leaving the EU, and we must hold our own encryption keys. Is this supported, and on which commercial tier?",
+          "expected_source": [
+            "rfp-responses/data-residency-and-privacy.md",
+            "rfp-responses/security-architecture.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer_partial",
+          "answer": "Customer-managed encryption keys are supported on the Enterprise tier, using AWS KMS or Azure Key Vault. They are not available on Standard or Professional. However, the supplied evidence does not confirm hosting specifically in Germany or guarantee that no customer data leaves the EU.",
+          "reason": "The encryption-key and tier requirements are documented, but the Germany hosting and EU-only data residency requirements are not addressed by the supplied evidence and require SME confirmation.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            106
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 106,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## Can we manage our own encryption keys?  \nCustomer-managed keys are available on the Enterprise tier. Northwind supports AWS KMS and Azure Key Vault as external key providers. The customer retains the ability to revoke key access, which renders tenant data unreadable to Northwind within 15 minutes.  \nCustomer-managed keys are not available on the Standard or Professional tiers, which use Northwind-managed keys with the rotation policy described above.",
+              "chunk_index": 3,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.695483
+            },
+            {
+              "id": 14,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Classification  \nData is classified in four tiers. Public covers published material. Internal covers operational data with no customer content. Confidential covers customer content, contracts, and security findings. Restricted covers credentials, encryption keys, and audit evidence.  \nHandling requirements escalate by tier. Restricted data may not be stored outside designated systems and may not be transmitted over email under any circumstances.",
+              "chunk_index": 2,
+              "rrf_score": 0.014706,
+              "rerank_score": 0.564315
+            },
+            {
+              "id": 104,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is customer data encrypted at rest?  \nAll customer data at rest is encrypted using AES-256 in GCM mode. This applies to primary databases, object storage, backups, and snapshots. Encryption is enabled by default on every tenant and cannot be disabled.  \nKey rotation occurs automatically every 90 days. Previous key versions are retained for the duration of the backup retention window so that historical restores remain possible.",
+              "chunk_index": 1,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.253542
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 362,
+            "rerank": 227,
+            "rerank_wait": 0,
+            "synthesize": 2261,
+            "total": 2850
+          }
+        },
+        {
+          "id": "q06",
+          "section": "Architecture",
+          "question": "Can your zero trust network access product be deployed entirely on our own infrastructure in an air-gapped environment?",
+          "expected_source": [
+            "product/gate-overview.md",
+            "rfp-responses/deployment-models.md"
+          ],
+          "expected_behavior": "answer_negative",
+          "decision": "answer_partial",
+          "answer": "Northwind Gate is the zero trust network access product, but the supplied evidence does not confirm that Gate can be deployed entirely on customer-owned infrastructure in a fully air-gapped environment. Fully air-gapped operation is documented only for Sentinel and Northwind Core, using quarterly offline update bundles.",
+          "reason": "The available deployment documentation names Sentinel and Northwind Core, not Gate, so Gate's on-premises and air-gapped deployment support requires confirmation from an SME.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            40,
+            41,
+            79
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 40,
+              "title": "product/gate-overview.md",
+              "content": "# Northwind Gate  \nZero trust network access. Product overview maintained by Product Marketing, reviewed quarterly.",
+              "chunk_index": 0,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.27866
+            },
+            {
+              "id": 79,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## Can the platform run without internet connectivity?  \nSelf-managed deployments of Sentinel and Northwind Core can run with outbound connectivity restricted to a Northwind update endpoint and a license validation endpoint, both of which can be proxied. Threat intelligence feeds require periodic outbound access; customers can substitute an internally hosted feed mirror.  \nFully air-gapped operation, with no outbound connectivity at all, is supported for Sentinel and Northwind Core through an offline update bundle delivered quarterly.",
+              "chunk_index": 5,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.118457
+            },
+            {
+              "id": 41,
+              "title": "product/gate-overview.md",
+              "content": "## What Gate does  \nGate replaces network-level remote access with per-application access brokered on identity and device posture. A user authenticates once and reaches only the applications policy permits, with no route to anything else.  \nIt is most often deployed to retire a legacy VPN concentrator, or to give third-party contractors scoped access without issuing network credentials.",
+              "chunk_index": 1,
+              "rrf_score": 0.015385,
+              "rerank_score": 0.053586
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 285,
+            "rerank": 1741,
+            "rerank_wait": 0,
+            "synthesize": 2088,
+            "total": 4115
+          }
+        },
+        {
+          "id": "q07",
+          "section": "Architecture",
+          "question": "What are the minimum infrastructure requirements for a self-managed deployment monitoring 30,000 assets?",
+          "expected_source": [
+            "rfp-responses/deployment-models.md"
+          ],
+          "expected_behavior": "answer_partial",
+          "decision": "answer_partial",
+          "answer": "The supplied evidence does not specify minimum infrastructure requirements for monitoring 30,000 assets. The documented baseline, Kubernetes 1.29 or later with three 8 vCPU/32 GiB worker nodes, PostgreSQL 15 or later with 500 GiB storage, and 2 TiB of S3-compatible object storage, applies only to deployments monitoring up to 10,000 assets and should not be extrapolated. Sizing for 30,000 assets must be determined during an architecture review. Professional services engagement is required because the deployment is self-managed and exceeds 25,000 assets.",
+          "reason": "The available sizing baseline covers only up to 10,000 assets, while larger estates require architecture review and professional services.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            78,
+            91
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 78,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## What are the minimum infrastructure requirements for self-managed?  \nA Kubernetes cluster at version 1.29 or later with at least three worker nodes of 8 vCPU and 32 GiB each, a PostgreSQL 15 or later instance with 500 GiB of storage, and an S3-compatible object store with 2 TiB of capacity.  \nThese figures size a deployment monitoring up to 10,000 assets. Sizing guidance for larger estates is provided during the architecture review.",
+              "chunk_index": 4,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.537358
+            },
+            {
+              "id": 91,
+              "title": "rfp-responses/implementation-and-onboarding.md",
+              "content": "## Is professional services engagement mandatory?  \nA Launch package is included with every Enterprise subscription and covers the implementation described above. Standard and Professional tier customers can self-implement using published runbooks, or purchase the Launch package separately.  \nCustomers with more than 25,000 assets, more than three deployment regions, or a self-managed deployment are required to engage professional services.",
+              "chunk_index": 3,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.256032
+            },
+            {
+              "id": 59,
+              "title": "product/sentinel-overview.md",
+              "content": "## Scale  \nThe largest production Sentinel deployment monitors approximately 180,000 assets across 40 sites. Event ingest in that environment averages 1.2 million events per second at peak.",
+              "chunk_index": 6,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.185682
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 221,
+            "rerank": 141,
+            "rerank_wait": 0,
+            "synthesize": 3256,
+            "total": 3619
+          }
+        },
+        {
+          "id": "q08",
+          "section": "Implementation",
+          "question": "Describe how you would reconcile our existing configuration management database during implementation.",
+          "expected_source": [
+            "product/atlas-overview.md",
+            "rfp-responses/implementation-and-onboarding.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "During implementation, we would use Northwind Core to build a continuously updated inventory of devices communicating on the network, including agentless devices, and compare that observed inventory with your existing CMDB. The reconciliation would classify records into three groups:\n\n1. Assets present in both Northwind Core and the CMDB.\n2. Assets observed by Northwind Core but missing from the CMDB.\n3. Assets recorded in the CMDB but never observed.\n\nWe would review these discrepancies with your team. Results can be exported for manual review or written back to ServiceNow. Automatic write-back is disabled by default, so no CMDB changes would occur automatically unless enabled. At kickoff, we would agree on success criteria, with go-live validation including discovery coverage of at least 95% of known assets reconciled against the CMDB.",
+          "reason": "The supplied product and implementation documentation defines the comparison method, discrepancy categories, output options, write-back default, and go-live reconciliation target.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            34,
+            38,
+            93
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 38,
+              "title": "product/atlas-overview.md",
+              "content": "## CMDB reconciliation  \nNorthwind Core compares its inventory against the customer's CMDB and reports three categories: assets present in both, assets observed but absent from the CMDB, and assets recorded in the CMDB but never observed.  \nReconciliation output can be written back to ServiceNow or exported for manual review. Automatic write-back is off by default.",
+              "chunk_index": 5,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.531088
+            },
+            {
+              "id": 93,
+              "title": "rfp-responses/implementation-and-onboarding.md",
+              "content": "## What does success look like at go-live?  \nThree criteria are agreed at kickoff and verified at go-live: discovery coverage of at least 95% of known assets reconciled against the customer's CMDB, false positive rate below an agreed threshold on the top ten detection categories, and at least five analysts certified on the platform.",
+              "chunk_index": 5,
+              "rrf_score": 0.015385,
+              "rerank_score": 0.390755
+            },
+            {
+              "id": 34,
+              "title": "product/atlas-overview.md",
+              "content": "## What Northwind Core does  \nNorthwind Core builds and maintains a continuously updated inventory of every device communicating on the network, including devices with no agent and devices that cannot accept one.  \nThe common failure it addresses is that the configuration management database is incomplete and stale. Northwind Core discovers what is actually present rather than what was recorded.",
+              "chunk_index": 1,
+              "rrf_score": 0.015625,
+              "rerank_score": 0.100023
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 336,
+            "rerank": 1278,
+            "rerank_wait": 0,
+            "synthesize": 4110,
+            "total": 5725
+          }
+        },
+        {
+          "id": "q09",
+          "section": "Security",
+          "question": "If one of your support engineers needs to view our data while troubleshooting a case, what controls govern that access and will we be told?",
+          "expected_source": [
+            "rfp-responses/security-architecture.md",
+            "compliance/data-protection-policy.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Support engineers have no standing access to customer data. To troubleshoot an open case, an engineer must request time-bound access tied to that case, obtain approval from a second engineer, use a managed device with hardware-backed multi-factor authentication, and operate under least-privilege controls. Access automatically expires after four hours. Each elevation records the requesting and approving engineers, case reference, and records accessed.\n\nNotification depends on your tier. Enterprise customers receive access logs through the audit API and can opt into real-time notifications.",
+          "reason": "The security and data-protection documentation defines the support access approval, duration, authentication, logging, and Enterprise notification controls.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            108,
+            15
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 108,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How do you protect against insider access to customer data?  \nNorthwind staff have no standing access to customer data. Access requires a time-bound elevation request tied to an open support case, approved by a second engineer, and automatically expires after four hours.  \nEvery elevation is logged with the requesting engineer, the approving engineer, the case reference, and the records accessed. Customers on the Enterprise tier receive these access logs through the audit API and can opt into real-time notification.",
+              "chunk_index": 5,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.497144
+            },
+            {
+              "id": 15,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Access control  \nAccess follows least privilege with mandatory quarterly recertification. Access to systems holding Confidential or Restricted data requires hardware-backed multi-factor authentication and is available only from managed devices.  \nStanding access to customer content is not granted to any role. Access is obtained through the time-bound elevation process described in the security architecture documentation.",
+              "chunk_index": 3,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.239412
+            },
+            {
+              "id": 23,
+              "title": "compliance/subprocessors.md",
+              "content": "## Business systems  \nZendesk provides the support case system. Data processed: support case content, which may contain customer-supplied diagnostic data. Customers on Enterprise can request region-restricted case handling.  \nAtlassian provides internal engineering issue tracking. Customer content is not permitted in engineering issues; diagnostic data is referenced by case identifier only.",
+              "chunk_index": 3,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.232389
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 346,
+            "rerank": 136,
+            "rerank_wait": 0,
+            "synthesize": 1925,
+            "total": 2408
+          }
+        },
+        {
+          "id": "q10",
+          "section": "Contractual",
+          "question": "What happens to our data if we terminate the agreement, and how soon is it destroyed?",
+          "expected_source": [
+            "rfp-responses/data-residency-and-privacy.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "If you terminate the agreement, all customer data is deleted within 30 days. Any backups containing customer data age out within an additional 35 days, meaning backup copies may remain for up to 65 days after termination. A certificate of deletion is available upon request.",
+          "reason": "The retention policy specifies both the deletion timeline for customer data and the additional backup aging period after termination.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            72
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 72,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## What is your data retention policy?  \nEvent data is retained for 90 days on Standard, 180 days on Professional, and 400 days on Enterprise. Configuration and audit records are retained for the life of the contract plus 90 days.  \nOn termination, all customer data is deleted within 30 days. Backups containing customer data age out within a further 35 days. A certificate of deletion is issued on request.",
+              "chunk_index": 5,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.602179
+            },
+            {
+              "id": 16,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Personnel  \nAll personnel complete security and privacy training at onboarding and annually thereafter. Background checks are performed where permitted by local law. All personnel are bound by confidentiality obligations surviving termination.  \nAccess is revoked within one hour of termination, and the revocation process is tested quarterly.",
+              "chunk_index": 4,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.181075
+            },
+            {
+              "id": 106,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## Can we manage our own encryption keys?  \nCustomer-managed keys are available on the Enterprise tier. Northwind supports AWS KMS and Azure Key Vault as external key providers. The customer retains the ability to revoke key access, which renders tenant data unreadable to Northwind within 15 minutes.  \nCustomer-managed keys are not available on the Standard or Professional tiers, which use Northwind-managed keys with the rotation policy described above.",
+              "chunk_index": 3,
+              "rrf_score": 0.013158,
+              "rerank_score": 0.084682
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 249,
+            "rerank": 139,
+            "rerank_wait": 0,
+            "synthesize": 2605,
+            "total": 2994
+          }
+        },
+        {
+          "id": "q11",
+          "section": "Compliance",
+          "question": "Confirm that Northwind holds FedRAMP Moderate authorization and provide the package identifier.",
+          "expected_source": [
+            "compliance/certifications-and-attestations.md"
+          ],
+          "expected_behavior": "answer_negative",
+          "decision": "answer_negative",
+          "answer": "Northwind does not currently hold FedRAMP Moderate authorization, or FedRAMP authorization at any impact level. It is targeting FedRAMP Moderate, but no date is committed. The evidence does not provide a package identifier.",
+          "reason": "The approved certification record explicitly states that FedRAMP authorization is not currently held.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            10
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 10,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "## Not currently held  \nFedRAMP: Northwind does not hold a FedRAMP authorization at any impact level. Northwind has engaged a third-party assessment organization and is targeting FedRAMP Moderate authorization. No date is committed and none should be represented to a customer.  \nStateRAMP: not held and not currently pursued.  \nIRAP, Australia: not assessed.  \nPCI DSS: Northwind does not process, store, or transmit cardholder data, and therefore holds no PCI DSS attestation. Where a customer's RFP asks for PCI compliance, the correct response is that Northwind is out of scope, not that it is compliant.  \nC5, Germany: not held. An equivalence mapping from ISO 27001 to C5 is available and has been accepted by two German customers, but this is not a substitute for attestation.",
+              "chunk_index": 3,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.567769
+            },
+            {
+              "id": 2,
+              "title": "approved-language/company-boilerplate.md",
+              "content": "## Company description  \nNorthwind Systems builds infrastructure and security software for organizations that need to see and control what is on their network. Founded in 2014 and headquartered in Austin, Texas, Northwind employs approximately 400 people across offices in Austin, Dublin, and Singapore.",
+              "chunk_index": 1,
+              "rrf_score": 0.013699,
+              "rerank_score": 0.143969
+            },
+            {
+              "id": 73,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## Do you comply with CCPA?  \nYes. Northwind acts as a service provider under CCPA and does not sell or share personal information. The same export and deletion interfaces described above serve CCPA requests.",
+              "chunk_index": 6,
+              "rrf_score": 0.013889,
+              "rerank_score": 0.140466
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 363,
+            "rerank": 128,
+            "rerank_wait": 0,
+            "synthesize": 1660,
+            "total": 2152
+          }
+        },
+        {
+          "id": "q12",
+          "section": "Compliance",
+          "question": "Provide your PCI DSS Level 1 attestation of compliance.",
+          "expected_source": [
+            "compliance/certifications-and-attestations.md"
+          ],
+          "expected_behavior": "answer_negative",
+          "decision": "answer_negative",
+          "answer": "Northwind cannot provide a PCI DSS Level 1 attestation of compliance. Northwind does not process, store, or transmit cardholder data, so it is out of scope for PCI DSS and holds no PCI DSS attestation.",
+          "reason": "The authoritative certifications record explicitly states that Northwind is out of scope for PCI DSS and does not hold an attestation.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            10
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 10,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "## Not currently held  \nFedRAMP: Northwind does not hold a FedRAMP authorization at any impact level. Northwind has engaged a third-party assessment organization and is targeting FedRAMP Moderate authorization. No date is committed and none should be represented to a customer.  \nStateRAMP: not held and not currently pursued.  \nIRAP, Australia: not assessed.  \nPCI DSS: Northwind does not process, store, or transmit cardholder data, and therefore holds no PCI DSS attestation. Where a customer's RFP asks for PCI compliance, the correct response is that Northwind is out of scope, not that it is compliant.  \nC5, Germany: not held. An equivalence mapping from ISO 27001 to C5 is available and has been accepted by two German customers, but this is not a substitute for attestation.",
+              "chunk_index": 3,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.186792
+            },
+            {
+              "id": 7,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "# Certifications and Attestations  \nMaintained by Compliance. Last reviewed October 2026. This document is the authoritative list; do not assert a certification that does not appear here.",
+              "chunk_index": 0,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.112474
+            },
+            {
+              "id": 14,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Classification  \nData is classified in four tiers. Public covers published material. Internal covers operational data with no customer content. Confidential covers customer content, contracts, and security findings. Restricted covers credentials, encryption keys, and audit evidence.  \nHandling requirements escalate by tier. Restricted data may not be stored outside designated systems and may not be transmitted over email under any circumstances.",
+              "chunk_index": 2,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.091846
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 252,
+            "rerank": 131,
+            "rerank_wait": 0,
+            "synthesize": 1559,
+            "total": 1943
+          }
+        },
+        {
+          "id": "q13",
+          "section": "Commercial",
+          "question": "Provide three-year pricing for a 25,000 asset deployment including all professional services.",
+          "expected_source": [
+            "approved-language/company-boilerplate.md"
+          ],
+          "expected_behavior": "redirect",
+          "decision": "refuse",
+          "answer": "The supplied evidence does not provide subscription rates, professional services fees, or a three-year pricing schedule for a 25,000-asset deployment. Please route this request to the pricing or sales SME for a complete quote.",
+          "reason": "The evidence only states that a Launch package is included with every Enterprise subscription and that professional services are required above 25,000 assets or for certain deployment models. It does not contain the pricing needed to calculate the requested total.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            91
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 91,
+              "title": "rfp-responses/implementation-and-onboarding.md",
+              "content": "## Is professional services engagement mandatory?  \nA Launch package is included with every Enterprise subscription and covers the implementation described above. Standard and Professional tier customers can self-implement using published runbooks, or purchase the Launch package separately.  \nCustomers with more than 25,000 assets, more than three deployment regions, or a self-managed deployment are required to engage professional services.",
+              "chunk_index": 3,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.597961
+            },
+            {
+              "id": 39,
+              "title": "product/atlas-overview.md",
+              "content": "## Scale and performance  \nA single Northwind Core deployment supports up to 250,000 assets. Discovery of a newly connected device typically completes within 90 seconds of its first observed network activity.",
+              "chunk_index": 6,
+              "rrf_score": 0.014286,
+              "rerank_score": 0.138497
+            },
+            {
+              "id": 77,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## Which clouds are supported for self-managed deployment?  \nAWS and Azure are supported and documented. Google Cloud is supported on a best-effort basis; reference Terraform is not published for GCP and deployment requires a professional services engagement.",
+              "chunk_index": 3,
+              "rrf_score": 0.014493,
+              "rerank_score": 0.091164
+            }
+          ],
+          "retrieval_hit": false,
+          "mrr": 0.0,
+          "timings_ms": {
+            "retrieve": 218,
+            "rerank": 700,
+            "rerank_wait": 0,
+            "synthesize": 2213,
+            "total": 3133
+          }
+        },
+        {
+          "id": "q14",
+          "section": "Roadmap",
+          "question": "Describe your roadmap for post-quantum cryptography in the sensor transport layer.",
+          "expected_source": [],
+          "expected_behavior": "refuse",
+          "decision": "refuse",
+          "answer": "The supplied documentation does not describe a post-quantum cryptography roadmap for the sensor transport layer. Please route this question to the product security or cryptography SME.",
+          "reason": "The evidence only states that sensors use outbound HTTPS on port 443 and may connect through a proxy or customer-operated aggregator. It provides no post-quantum cryptography plans or timelines.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            50
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 49,
+              "title": "product/reference-architecture.md",
+              "content": "## Data flow  \nSensors process traffic locally and forward metadata, not full packet capture, to the ingest layer. A typical sensor forwards between 1 and 3 percent of observed traffic volume as metadata.  \nFull packet capture is available as an optional sensor-local rolling buffer, retained on the sensor and never forwarded. Buffer depth depends on sensor storage, typically 4 to 72 hours.",
+              "chunk_index": 2,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.061317
+            },
+            {
+              "id": 50,
+              "title": "product/reference-architecture.md",
+              "content": "## Network requirements  \nSensors require outbound HTTPS on 443 to the regional ingest endpoint. No inbound connections to sensors are required.  \nWhere egress is restricted, sensors can forward through an HTTP proxy with authentication, or to a customer-operated aggregator that holds the single permitted egress path.  \nBandwidth from site to ingest should be provisioned at approximately 2 percent of monitored throughput, with a floor of 10 Mbps per site.",
+              "chunk_index": 3,
+              "rrf_score": 0.015385,
+              "rerank_score": 0.05939
+            },
+            {
+              "id": 52,
+              "title": "product/reference-architecture.md",
+              "content": "## High availability at the collection layer  \nSensors can be deployed in pairs receiving the same traffic mirror, with deduplication at ingest. Loss of one sensor in a pair causes no gap.  \nWhere a pair is not deployed, loss of a sensor creates a visibility gap for the duration of the outage. Sensors buffer locally for up to four hours when ingest is unreachable, so an ingest-side or network interruption shorter than that results in no data loss.",
+              "chunk_index": 5,
+              "rrf_score": 0.015152,
+              "rerank_score": 0.034336
+            }
+          ],
+          "retrieval_hit": null,
+          "mrr": null,
+          "timings_ms": {
+            "retrieve": 300,
+            "rerank": 130,
+            "rerank_wait": 0,
+            "synthesize": 2895,
+            "total": 3326
+          }
+        },
+        {
+          "id": "q15",
+          "section": "Architecture",
+          "question": "Do you support Kubernetes admission controller integration for runtime policy enforcement?",
+          "expected_source": [],
+          "expected_behavior": "refuse",
+          "decision": "refuse",
+          "answer": "The supplied evidence does not establish whether Kubernetes admission controller integration is supported for runtime policy enforcement. Please route this question to the appropriate product or engineering SME.",
+          "reason": "The documents mention general webhooks and Kubernetes deployment requirements, but do not address admission controllers or runtime enforcement.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 98,
+              "title": "rfp-responses/integrations-and-apis.md",
+              "content": "## Are webhooks supported?  \nYes. Webhooks can be configured for detection events, asset state changes, policy violations, and administrative actions. Payloads are signed with HMAC-SHA256 using a per-endpoint secret.  \nDelivery is retried with exponential backoff for up to 24 hours. Undelivered events remain available through the API for the tenant's retention period.",
+              "chunk_index": 3,
+              "rrf_score": 0.013158,
+              "rerank_score": 0.046159
+            },
+            {
+              "id": 78,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## What are the minimum infrastructure requirements for self-managed?  \nA Kubernetes cluster at version 1.29 or later with at least three worker nodes of 8 vCPU and 32 GiB each, a PostgreSQL 15 or later instance with 500 GiB of storage, and an S3-compatible object store with 2 TiB of capacity.  \nThese figures size a deployment monitoring up to 10,000 assets. Sizing guidance for larger estates is provided during the architecture review.",
+              "chunk_index": 4,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.039008
+            },
+            {
+              "id": 107,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is the platform network segmented?  \nEach tenant's data plane runs in a logically isolated namespace with network policies that deny cross-tenant traffic by default. Control plane and data plane run in separate virtual networks connected only through an authenticated internal gateway.  \nProduction environments are isolated from staging and development at the account level, not merely at the network level. No production data is copied into lower environments under any circumstances.",
+              "chunk_index": 4,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.030795
+            }
+          ],
+          "retrieval_hit": null,
+          "mrr": null,
+          "timings_ms": {
+            "retrieve": 251,
+            "rerank": 250,
+            "rerank_wait": 0,
+            "synthesize": 1663,
+            "total": 2165
+          }
+        }
+      ],
+      "metrics": {
+        "decision_accuracy": {
+          "correct": 12,
+          "denominator": 15,
+          "percentage": 80.0
+        },
+        "failure_count": 0,
+        "decision_breakdown": {
+          "answer": {
+            "expected": 8,
+            "returned": 7
+          },
+          "answer_negative": {
+            "expected": 3,
+            "returned": 2
+          },
+          "answer_partial": {
+            "expected": 1,
+            "returned": 3
+          },
+          "redirect": {
+            "expected": 1,
+            "returned": 0
+          },
+          "refuse": {
+            "expected": 2,
+            "returned": 3
+          }
+        },
+        "retrieval": {
+          "eligible_questions": 13,
+          "hits": 12,
+          "hit_rate_percentage": 92.31,
+          "mrr": 0.923077
+        },
+        "top_1_rerank_score": {
+          "answerable": {
+            "mean_top_1_rerank_score": 0.590795,
+            "count": 12
+          },
+          "not_answerable": {
+            "mean_top_1_rerank_score": 0.235146,
+            "count": 3
+          }
+        },
+        "latency_ms": {
+          "retrieve": {
+            "p50": 285,
+            "p95": 4095
+          },
+          "rerank": {
+            "p50": 179,
+            "p95": 1741
+          },
+          "synthesize": {
+            "p50": 2310,
+            "p95": 4110
+          },
+          "total": {
+            "p50": 3133,
+            "p95": 7306
+          }
+        }
+      }
+    },
+    {
+      "run": 2,
+      "results": [
+        {
+          "id": "q01",
+          "section": "Security",
+          "question": "What encryption standards are used to protect data at rest and in transit?",
+          "expected_source": [
+            "rfp-responses/security-architecture.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Data is protected as follows:\n\n- At rest: AES-256 in GCM mode for primary databases, object storage, backups, and snapshots. Encryption is enabled by default for every tenant and cannot be disabled. Keys rotate automatically every 90 days.\n- In transit: TLS 1.3 is required for external connections. TLS 1.2 is permitted only for named legacy integrations upon written request. TLS 1.1, SSLv3, and older protocols are refused. Internal service-to-service traffic uses mutual TLS, with certificates rotated every 30 days.",
+          "reason": "The security architecture documentation specifies the encryption standards, protocol exceptions, and key or certificate rotation practices for data at rest and in transit.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            104,
+            105
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 104,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is customer data encrypted at rest?  \nAll customer data at rest is encrypted using AES-256 in GCM mode. This applies to primary databases, object storage, backups, and snapshots. Encryption is enabled by default on every tenant and cannot be disabled.  \nKey rotation occurs automatically every 90 days. Previous key versions are retained for the duration of the backup retention window so that historical restores remain possible.",
+              "chunk_index": 1,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.744081
+            },
+            {
+              "id": 105,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is data encrypted in transit?  \nAll external connections require TLS 1.3. TLS 1.2 is accepted only for named legacy integrations and must be requested in writing. Older protocol versions, including TLS 1.1 and SSLv3, are refused at the load balancer.  \nInternal service-to-service traffic within the Northwind platform is encrypted with mutual TLS, with certificates issued by an internal certificate authority and rotated every 30 days.",
+              "chunk_index": 2,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.583797
+            },
+            {
+              "id": 22,
+              "title": "compliance/subprocessors.md",
+              "content": "## Platform services  \nCloudflare provides edge termination and denial of service protection in all regions. Data processed: connection metadata, no customer content at rest.  \nTwilio provides transactional SMS for multi-factor authentication where a customer has enabled SMS as a factor. Data processed: phone number and one-time code. US only.  \nSendGrid provides transactional email. Data processed: recipient address and message content for notifications. US only.",
+              "chunk_index": 2,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.087167
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 392,
+            "rerank": 159,
+            "rerank_wait": 0,
+            "synthesize": 2129,
+            "total": 2681
+          }
+        },
+        {
+          "id": "q02",
+          "section": "Identity",
+          "question": "Which single sign-on standards do you support, and is automated user provisioning available?",
+          "expected_source": [
+            "rfp-responses/identity-and-access.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Northwind supports SAML 2.0 and OpenID Connect (OIDC) for single sign-on. Both are included on all paid tiers at no additional cost.\n\nAutomated user provisioning and deprovisioning are available through SCIM 2.0. Identity provider groups can be mapped to Northwind roles, and SCIM deprovisioning revokes active sessions within 60 seconds.",
+          "reason": "The supplied identity and access documentation directly confirms the supported SSO standards and automated provisioning capabilities.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            82,
+            83
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 83,
+              "title": "rfp-responses/identity-and-access.md",
+              "content": "## Is automated user provisioning supported?  \nYes. Northwind supports SCIM 2.0 for automated provisioning and deprovisioning. Group membership from the identity provider can be mapped to Northwind roles, so access changes in the directory propagate without administrator action.  \nDeprovisioning through SCIM revokes active sessions within 60 seconds.",
+              "chunk_index": 2,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.816655
+            },
+            {
+              "id": 82,
+              "title": "rfp-responses/identity-and-access.md",
+              "content": "## What single sign-on standards are supported?  \nNorthwind supports SAML 2.0 and OpenID Connect for single sign-on. Both are available on all paid tiers at no additional cost.  \nTested and documented integrations exist for Okta, Microsoft Entra ID, Ping Identity, Google Workspace, and JumpCloud. Any identity provider conforming to SAML 2.0 or OIDC will work; the named providers simply have published setup guides.",
+              "chunk_index": 1,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.759601
+            },
+            {
+              "id": 85,
+              "title": "rfp-responses/identity-and-access.md",
+              "content": "## Is multi-factor authentication enforced?  \nWhen single sign-on is configured, multi-factor authentication is enforced by the customer's identity provider and Northwind honors that assertion.  \nFor customers not using single sign-on, Northwind enforces time-based one-time password authentication on all administrator accounts. This cannot be disabled. MFA on non-administrator local accounts is configurable per tenant and enabled by default.",
+              "chunk_index": 4,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.081908
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 317,
+            "rerank": 133,
+            "rerank_wait": 0,
+            "synthesize": 1969,
+            "total": 2421
+          }
+        },
+        {
+          "id": "q03",
+          "section": "Service Levels",
+          "question": "State your monthly uptime commitment and the service credits that apply if it is missed.",
+          "expected_source": [
+            "rfp-responses/availability-and-sla.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Monthly uptime commitment:\n- Standard and Professional tiers: 99.9%\n- Enterprise tier: 99.95%\n\nIf monthly availability falls below the applicable commitment, credits against the following month's fees are:\n- 10% when availability is below the commitment but at least 99.0%\n- 25% when availability is below 99.0% but at least 95.0%\n- 50% when availability is below 95.0%\n\nCredits are the sole remedy for availability shortfalls and must be requested within 30 days of the affected month. Uptime is measured across one-minute intervals during the calendar month based on API and console reachability and successful responses, excluding scheduled maintenance.",
+          "reason": "The SLA documentation specifies tier-based monthly uptime commitments, measurement terms, credit thresholds, and the claim deadline.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            61,
+            62
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 62,
+              "title": "rfp-responses/availability-and-sla.md",
+              "content": "## What service credits apply if you miss the commitment?  \nCredits are applied against the following month's fees: 10% for availability below the commitment but at or above 99.0%, 25% below 99.0%, and 50% below 95.0%.  \nCredits are the sole remedy for availability shortfalls. A customer must request credits within 30 days of the affected month.",
+              "chunk_index": 2,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.782547
+            },
+            {
+              "id": 61,
+              "title": "rfp-responses/availability-and-sla.md",
+              "content": "## What uptime do you commit to?  \nThe Standard and Professional tiers carry a 99.9% monthly uptime commitment. The Enterprise tier carries 99.95%.  \nUptime is measured as the percentage of one-minute intervals in a calendar month during which the API and console are reachable and returning successful responses. Scheduled maintenance is excluded, and scheduled maintenance has not exceeded two hours per quarter in the last eight quarters.",
+              "chunk_index": 1,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.526563
+            },
+            {
+              "id": 11,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "## How to answer a certification question  \nState only what is held. Where something is not held, say so plainly and offer the nearest equivalent evidence. Do not describe a roadmap item as though it were current, and do not commit to a certification date.",
+              "chunk_index": 4,
+              "rrf_score": 0.013158,
+              "rerank_score": 0.066794
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 287,
+            "rerank": 248,
+            "rerank_wait": 0,
+            "synthesize": 2172,
+            "total": 2708
+          }
+        },
+        {
+          "id": "q04",
+          "section": "Data Residency",
+          "question": "In which geographic regions can our data be stored, and does any data leave the region we select?",
+          "expected_source": [
+            "rfp-responses/data-residency-and-privacy.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Your home region is selected during provisioning from six options:\n\n- US East (Virginia)\n- US West (Oregon)\n- EU Central (Frankfurt)\n- EU West (Dublin)\n- APAC Southeast (Singapore)\n- APAC South (Sydney)\n\nCustomer content, backups, and telemetry remain in the selected region. However, three limited categories of operational metadata are processed in US East regardless of the selected region: aggregate billing usage counters, platform health metrics, and support case metadata. This metadata does not include customer content, asset names, network addresses, or user identities. A full replication schema is available under NDA.\n\nThe home region cannot be changed after provisioning without a migration engagement.",
+          "reason": "The supplied data residency documentation identifies all available regions and clearly distinguishes region-resident customer data from the limited operational metadata processed in US East.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            68,
+            69
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 68,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## In which regions can our data be stored?  \nNorthwind operates in six regions: US East (Virginia), US West (Oregon), EU Central (Frankfurt), EU West (Dublin), APAC Southeast (Singapore), and APAC South (Sydney).  \nThe customer selects a home region at provisioning. All customer data, including backups and telemetry, remains within that region. Region cannot be changed after provisioning without a migration engagement.",
+              "chunk_index": 1,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.849785
+            },
+            {
+              "id": 69,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## Does any customer data leave the selected region?  \nCustomer content does not leave the home region. Three categories of operational metadata are processed in US East regardless of home region: aggregate usage counters for billing, platform health metrics, and support case metadata.  \nNone of these contain customer content, asset names, network addresses, or user identities. A full schema of what is replicated is available under NDA.",
+              "chunk_index": 2,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.688238
+            },
+            {
+              "id": 21,
+              "title": "compliance/subprocessors.md",
+              "content": "## Infrastructure  \nAmazon Web Services provides compute, storage, and networking for US East, US West, EU West, and APAC Southeast. Data processed: all customer content in those regions.  \nMicrosoft Azure provides compute, storage, and networking for EU Central and APAC South. Data processed: all customer content in those regions.  \nBoth are engaged under their standard data processing terms with Standard Contractual Clauses where applicable.",
+              "chunk_index": 1,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.329694
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 381,
+            "rerank": 146,
+            "rerank_wait": 0,
+            "synthesize": 3032,
+            "total": 3560
+          }
+        },
+        {
+          "id": "q05",
+          "section": "Data Residency",
+          "question": "We require hosting in Germany with no customer data leaving the EU, and we must hold our own encryption keys. Is this supported, and on which commercial tier?",
+          "expected_source": [
+            "rfp-responses/data-residency-and-privacy.md",
+            "rfp-responses/security-architecture.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer_partial",
+          "answer": "Customer-managed encryption keys are supported only on the Enterprise tier, using AWS KMS or Azure Key Vault. However, the supplied evidence does not confirm hosting in Germany or guarantee that no customer data leaves the EU. Therefore, support for the complete requirement cannot be confirmed without SME review.",
+          "reason": "The documentation establishes the tier and options for customer-managed keys, but provides no approved information about German hosting or EU-only data residency.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            106
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 106,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## Can we manage our own encryption keys?  \nCustomer-managed keys are available on the Enterprise tier. Northwind supports AWS KMS and Azure Key Vault as external key providers. The customer retains the ability to revoke key access, which renders tenant data unreadable to Northwind within 15 minutes.  \nCustomer-managed keys are not available on the Standard or Professional tiers, which use Northwind-managed keys with the rotation policy described above.",
+              "chunk_index": 3,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.695483
+            },
+            {
+              "id": 14,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Classification  \nData is classified in four tiers. Public covers published material. Internal covers operational data with no customer content. Confidential covers customer content, contracts, and security findings. Restricted covers credentials, encryption keys, and audit evidence.  \nHandling requirements escalate by tier. Restricted data may not be stored outside designated systems and may not be transmitted over email under any circumstances.",
+              "chunk_index": 2,
+              "rrf_score": 0.014706,
+              "rerank_score": 0.564315
+            },
+            {
+              "id": 104,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is customer data encrypted at rest?  \nAll customer data at rest is encrypted using AES-256 in GCM mode. This applies to primary databases, object storage, backups, and snapshots. Encryption is enabled by default on every tenant and cannot be disabled.  \nKey rotation occurs automatically every 90 days. Previous key versions are retained for the duration of the backup retention window so that historical restores remain possible.",
+              "chunk_index": 1,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.253542
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 192,
+            "rerank": 158,
+            "rerank_wait": 0,
+            "synthesize": 2483,
+            "total": 2834
+          }
+        },
+        {
+          "id": "q06",
+          "section": "Architecture",
+          "question": "Can your zero trust network access product be deployed entirely on our own infrastructure in an air-gapped environment?",
+          "expected_source": [
+            "product/gate-overview.md",
+            "rfp-responses/deployment-models.md"
+          ],
+          "expected_behavior": "answer_negative",
+          "decision": "answer_partial",
+          "answer": "The supplied evidence does not confirm that Northwind Gate can be deployed entirely on customer-owned infrastructure in a fully air-gapped environment. Fully air-gapped operation is documented only for Sentinel and Northwind Core, not Gate.",
+          "reason": "Gate is identified as the zero trust network access product, but its supported deployment and connectivity models are not provided. Product confirmation is required.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            40,
+            41,
+            79
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 40,
+              "title": "product/gate-overview.md",
+              "content": "# Northwind Gate  \nZero trust network access. Product overview maintained by Product Marketing, reviewed quarterly.",
+              "chunk_index": 0,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.278556
+            },
+            {
+              "id": 79,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## Can the platform run without internet connectivity?  \nSelf-managed deployments of Sentinel and Northwind Core can run with outbound connectivity restricted to a Northwind update endpoint and a license validation endpoint, both of which can be proxied. Threat intelligence feeds require periodic outbound access; customers can substitute an internally hosted feed mirror.  \nFully air-gapped operation, with no outbound connectivity at all, is supported for Sentinel and Northwind Core through an offline update bundle delivered quarterly.",
+              "chunk_index": 5,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.118396
+            },
+            {
+              "id": 41,
+              "title": "product/gate-overview.md",
+              "content": "## What Gate does  \nGate replaces network-level remote access with per-application access brokered on identity and device posture. A user authenticates once and reaches only the applications policy permits, with no route to anything else.  \nIt is most often deployed to retire a legacy VPN concentrator, or to give third-party contractors scoped access without issuing network credentials.",
+              "chunk_index": 1,
+              "rrf_score": 0.015385,
+              "rerank_score": 0.053586
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 322,
+            "rerank": 150,
+            "rerank_wait": 0,
+            "synthesize": 2396,
+            "total": 2868
+          }
+        },
+        {
+          "id": "q07",
+          "section": "Architecture",
+          "question": "What are the minimum infrastructure requirements for a self-managed deployment monitoring 30,000 assets?",
+          "expected_source": [
+            "rfp-responses/deployment-models.md"
+          ],
+          "expected_behavior": "answer_partial",
+          "decision": "answer_partial",
+          "answer": "The supplied evidence does not provide minimum infrastructure requirements for monitoring 30,000 assets. The documented baseline, Kubernetes 1.29 or later with at least three worker nodes of 8 vCPU and 32 GiB each, PostgreSQL 15 or later with 500 GiB storage, and an S3-compatible object store with 2 TiB capacity, applies only to deployments monitoring up to 10,000 assets. Larger estates require sizing guidance during an architecture review. In addition, a 30,000-asset self-managed deployment requires professional services engagement.",
+          "reason": "The available baseline is limited to 10,000 assets, while 30,000-asset sizing must be determined through architecture review and professional services.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            78,
+            91
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 78,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## What are the minimum infrastructure requirements for self-managed?  \nA Kubernetes cluster at version 1.29 or later with at least three worker nodes of 8 vCPU and 32 GiB each, a PostgreSQL 15 or later instance with 500 GiB of storage, and an S3-compatible object store with 2 TiB of capacity.  \nThese figures size a deployment monitoring up to 10,000 assets. Sizing guidance for larger estates is provided during the architecture review.",
+              "chunk_index": 4,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.537358
+            },
+            {
+              "id": 91,
+              "title": "rfp-responses/implementation-and-onboarding.md",
+              "content": "## Is professional services engagement mandatory?  \nA Launch package is included with every Enterprise subscription and covers the implementation described above. Standard and Professional tier customers can self-implement using published runbooks, or purchase the Launch package separately.  \nCustomers with more than 25,000 assets, more than three deployment regions, or a self-managed deployment are required to engage professional services.",
+              "chunk_index": 3,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.256032
+            },
+            {
+              "id": 59,
+              "title": "product/sentinel-overview.md",
+              "content": "## Scale  \nThe largest production Sentinel deployment monitors approximately 180,000 assets across 40 sites. Event ingest in that environment averages 1.2 million events per second at peak.",
+              "chunk_index": 6,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.185682
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 254,
+            "rerank": 253,
+            "rerank_wait": 0,
+            "synthesize": 2967,
+            "total": 3475
+          }
+        },
+        {
+          "id": "q08",
+          "section": "Implementation",
+          "question": "Describe how you would reconcile our existing configuration management database during implementation.",
+          "expected_source": [
+            "product/atlas-overview.md",
+            "rfp-responses/implementation-and-onboarding.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "During implementation, we would build a continuously updated inventory of devices communicating on the network, including agentless devices and those that cannot accept an agent. We would compare that observed inventory with your existing CMDB and classify the results into three groups:\n\n1. Assets present in both sources.\n2. Assets observed on the network but missing from the CMDB.\n3. Assets recorded in the CMDB but never observed.\n\nThe reconciliation results can be exported for manual review or written back to ServiceNow. Automatic write-back is disabled by default, allowing the results to be reviewed before CMDB updates are made. At kickoff, we would agree on success criteria, with go-live verification targeting discovery coverage of at least 95% of known assets reconciled against the CMDB.",
+          "reason": "The implementation guidance defines the inventory comparison, reconciliation categories, output options, default write-back setting, and go-live coverage target.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            34,
+            38,
+            93
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 38,
+              "title": "product/atlas-overview.md",
+              "content": "## CMDB reconciliation  \nNorthwind Core compares its inventory against the customer's CMDB and reports three categories: assets present in both, assets observed but absent from the CMDB, and assets recorded in the CMDB but never observed.  \nReconciliation output can be written back to ServiceNow or exported for manual review. Automatic write-back is off by default.",
+              "chunk_index": 5,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.531088
+            },
+            {
+              "id": 93,
+              "title": "rfp-responses/implementation-and-onboarding.md",
+              "content": "## What does success look like at go-live?  \nThree criteria are agreed at kickoff and verified at go-live: discovery coverage of at least 95% of known assets reconciled against the customer's CMDB, false positive rate below an agreed threshold on the top ten detection categories, and at least five analysts certified on the platform.",
+              "chunk_index": 5,
+              "rrf_score": 0.015385,
+              "rerank_score": 0.390755
+            },
+            {
+              "id": 34,
+              "title": "product/atlas-overview.md",
+              "content": "## What Northwind Core does  \nNorthwind Core builds and maintains a continuously updated inventory of every device communicating on the network, including devices with no agent and devices that cannot accept one.  \nThe common failure it addresses is that the configuration management database is incomplete and stale. Northwind Core discovers what is actually present rather than what was recorded.",
+              "chunk_index": 1,
+              "rrf_score": 0.015625,
+              "rerank_score": 0.100023
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 201,
+            "rerank": 1674,
+            "rerank_wait": 0,
+            "synthesize": 3199,
+            "total": 5075
+          }
+        },
+        {
+          "id": "q09",
+          "section": "Security",
+          "question": "If one of your support engineers needs to view our data while troubleshooting a case, what controls govern that access and will we be told?",
+          "expected_source": [
+            "rfp-responses/security-architecture.md",
+            "compliance/data-protection-policy.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Support engineers have no standing access to customer data. To view it for troubleshooting, an engineer must submit a time-bound elevation request tied to an open support case. A second engineer must approve the request, and access automatically expires after four hours. Access is limited by least privilege, requires hardware-backed multi-factor authentication from a managed device, and is subject to quarterly recertification. Each elevation is logged, including the requester, approver, case reference, and records accessed.\n\nNotification depends on your plan. Enterprise customers receive access logs through the audit API and can opt into real-time notifications.",
+          "reason": "The security and access-control documentation defines the approval, duration, authentication, logging, and Enterprise notification controls.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            108,
+            15
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 108,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How do you protect against insider access to customer data?  \nNorthwind staff have no standing access to customer data. Access requires a time-bound elevation request tied to an open support case, approved by a second engineer, and automatically expires after four hours.  \nEvery elevation is logged with the requesting engineer, the approving engineer, the case reference, and the records accessed. Customers on the Enterprise tier receive these access logs through the audit API and can opt into real-time notification.",
+              "chunk_index": 5,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.497144
+            },
+            {
+              "id": 15,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Access control  \nAccess follows least privilege with mandatory quarterly recertification. Access to systems holding Confidential or Restricted data requires hardware-backed multi-factor authentication and is available only from managed devices.  \nStanding access to customer content is not granted to any role. Access is obtained through the time-bound elevation process described in the security architecture documentation.",
+              "chunk_index": 3,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.239412
+            },
+            {
+              "id": 23,
+              "title": "compliance/subprocessors.md",
+              "content": "## Business systems  \nZendesk provides the support case system. Data processed: support case content, which may contain customer-supplied diagnostic data. Customers on Enterprise can request region-restricted case handling.  \nAtlassian provides internal engineering issue tracking. Customer content is not permitted in engineering issues; diagnostic data is referenced by case identifier only.",
+              "chunk_index": 3,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.232389
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 214,
+            "rerank": 234,
+            "rerank_wait": 0,
+            "synthesize": 2190,
+            "total": 2640
+          }
+        },
+        {
+          "id": "q10",
+          "section": "Contractual",
+          "question": "What happens to our data if we terminate the agreement, and how soon is it destroyed?",
+          "expected_source": [
+            "rfp-responses/data-residency-and-privacy.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "If you terminate the agreement, all customer data is deleted within 30 days. Any customer data remaining in backups ages out within an additional 35 days, meaning backup copies may persist for up to 65 days after termination. A certificate of deletion is available upon request.",
+          "reason": "The data retention policy specifies both the post-termination deletion period and the additional backup aging period.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            72
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 72,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## What is your data retention policy?  \nEvent data is retained for 90 days on Standard, 180 days on Professional, and 400 days on Enterprise. Configuration and audit records are retained for the life of the contract plus 90 days.  \nOn termination, all customer data is deleted within 30 days. Backups containing customer data age out within a further 35 days. A certificate of deletion is issued on request.",
+              "chunk_index": 5,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.602179
+            },
+            {
+              "id": 16,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Personnel  \nAll personnel complete security and privacy training at onboarding and annually thereafter. Background checks are performed where permitted by local law. All personnel are bound by confidentiality obligations surviving termination.  \nAccess is revoked within one hour of termination, and the revocation process is tested quarterly.",
+              "chunk_index": 4,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.181075
+            },
+            {
+              "id": 106,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## Can we manage our own encryption keys?  \nCustomer-managed keys are available on the Enterprise tier. Northwind supports AWS KMS and Azure Key Vault as external key providers. The customer retains the ability to revoke key access, which renders tenant data unreadable to Northwind within 15 minutes.  \nCustomer-managed keys are not available on the Standard or Professional tiers, which use Northwind-managed keys with the rotation policy described above.",
+              "chunk_index": 3,
+              "rrf_score": 0.013158,
+              "rerank_score": 0.084682
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 236,
+            "rerank": 152,
+            "rerank_wait": 0,
+            "synthesize": 2123,
+            "total": 2513
+          }
+        },
+        {
+          "id": "q11",
+          "section": "Compliance",
+          "question": "Confirm that Northwind holds FedRAMP Moderate authorization and provide the package identifier.",
+          "expected_source": [
+            "compliance/certifications-and-attestations.md"
+          ],
+          "expected_behavior": "answer_negative",
+          "decision": "answer_negative",
+          "answer": "No. Northwind does not currently hold FedRAMP Moderate authorization, or FedRAMP authorization at any impact level. It is only targeting Moderate authorization, with no committed date. The evidence does not provide a package identifier.",
+          "reason": "The certifications record explicitly states that FedRAMP authorization is not currently held.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            10
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 10,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "## Not currently held  \nFedRAMP: Northwind does not hold a FedRAMP authorization at any impact level. Northwind has engaged a third-party assessment organization and is targeting FedRAMP Moderate authorization. No date is committed and none should be represented to a customer.  \nStateRAMP: not held and not currently pursued.  \nIRAP, Australia: not assessed.  \nPCI DSS: Northwind does not process, store, or transmit cardholder data, and therefore holds no PCI DSS attestation. Where a customer's RFP asks for PCI compliance, the correct response is that Northwind is out of scope, not that it is compliant.  \nC5, Germany: not held. An equivalence mapping from ISO 27001 to C5 is available and has been accepted by two German customers, but this is not a substitute for attestation.",
+              "chunk_index": 3,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.567769
+            },
+            {
+              "id": 2,
+              "title": "approved-language/company-boilerplate.md",
+              "content": "## Company description  \nNorthwind Systems builds infrastructure and security software for organizations that need to see and control what is on their network. Founded in 2014 and headquartered in Austin, Texas, Northwind employs approximately 400 people across offices in Austin, Dublin, and Singapore.",
+              "chunk_index": 1,
+              "rrf_score": 0.013699,
+              "rerank_score": 0.143969
+            },
+            {
+              "id": 73,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## Do you comply with CCPA?  \nYes. Northwind acts as a service provider under CCPA and does not sell or share personal information. The same export and deletion interfaces described above serve CCPA requests.",
+              "chunk_index": 6,
+              "rrf_score": 0.013889,
+              "rerank_score": 0.140466
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 254,
+            "rerank": 292,
+            "rerank_wait": 0,
+            "synthesize": 1601,
+            "total": 2148
+          }
+        },
+        {
+          "id": "q12",
+          "section": "Compliance",
+          "question": "Provide your PCI DSS Level 1 attestation of compliance.",
+          "expected_source": [
+            "compliance/certifications-and-attestations.md"
+          ],
+          "expected_behavior": "answer_negative",
+          "decision": "answer_negative",
+          "answer": "Northwind cannot provide a PCI DSS Level 1 attestation of compliance. Northwind does not process, store, or transmit cardholder data, so it is out of scope for PCI DSS and holds no PCI DSS attestation.",
+          "reason": "The authoritative certifications record explicitly states that Northwind is out of scope for PCI DSS and holds no attestation.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            10
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 10,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "## Not currently held  \nFedRAMP: Northwind does not hold a FedRAMP authorization at any impact level. Northwind has engaged a third-party assessment organization and is targeting FedRAMP Moderate authorization. No date is committed and none should be represented to a customer.  \nStateRAMP: not held and not currently pursued.  \nIRAP, Australia: not assessed.  \nPCI DSS: Northwind does not process, store, or transmit cardholder data, and therefore holds no PCI DSS attestation. Where a customer's RFP asks for PCI compliance, the correct response is that Northwind is out of scope, not that it is compliant.  \nC5, Germany: not held. An equivalence mapping from ISO 27001 to C5 is available and has been accepted by two German customers, but this is not a substitute for attestation.",
+              "chunk_index": 3,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.186792
+            },
+            {
+              "id": 7,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "# Certifications and Attestations  \nMaintained by Compliance. Last reviewed October 2026. This document is the authoritative list; do not assert a certification that does not appear here.",
+              "chunk_index": 0,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.112474
+            },
+            {
+              "id": 14,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Classification  \nData is classified in four tiers. Public covers published material. Internal covers operational data with no customer content. Confidential covers customer content, contracts, and security findings. Restricted covers credentials, encryption keys, and audit evidence.  \nHandling requirements escalate by tier. Restricted data may not be stored outside designated systems and may not be transmitted over email under any circumstances.",
+              "chunk_index": 2,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.091846
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 270,
+            "rerank": 139,
+            "rerank_wait": 0,
+            "synthesize": 1547,
+            "total": 1957
+          }
+        },
+        {
+          "id": "q13",
+          "section": "Commercial",
+          "question": "Provide three-year pricing for a 25,000 asset deployment including all professional services.",
+          "expected_source": [
+            "approved-language/company-boilerplate.md"
+          ],
+          "expected_behavior": "redirect",
+          "decision": "answer_partial",
+          "answer": "The supplied evidence does not provide three-year subscription pricing or professional services fees for a 25,000-asset deployment. It states that a Launch package is included with every Enterprise subscription. Professional services are mandatory for deployments with more than 25,000 assets, more than three deployment regions, self-managed deployments, and GCP deployments. Pricing requires review by a sales or pricing SME based on the subscription tier, deployment model, cloud, and region count.",
+          "reason": "The evidence documents when professional services are included or required, but contains no rates or three-year cost data.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            91,
+            77
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 91,
+              "title": "rfp-responses/implementation-and-onboarding.md",
+              "content": "## Is professional services engagement mandatory?  \nA Launch package is included with every Enterprise subscription and covers the implementation described above. Standard and Professional tier customers can self-implement using published runbooks, or purchase the Launch package separately.  \nCustomers with more than 25,000 assets, more than three deployment regions, or a self-managed deployment are required to engage professional services.",
+              "chunk_index": 3,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.598242
+            },
+            {
+              "id": 39,
+              "title": "product/atlas-overview.md",
+              "content": "## Scale and performance  \nA single Northwind Core deployment supports up to 250,000 assets. Discovery of a newly connected device typically completes within 90 seconds of its first observed network activity.",
+              "chunk_index": 6,
+              "rrf_score": 0.014286,
+              "rerank_score": 0.138567
+            },
+            {
+              "id": 77,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## Which clouds are supported for self-managed deployment?  \nAWS and Azure are supported and documented. Google Cloud is supported on a best-effort basis; reference Terraform is not published for GCP and deployment requires a professional services engagement.",
+              "chunk_index": 3,
+              "rrf_score": 0.014493,
+              "rerank_score": 0.091067
+            }
+          ],
+          "retrieval_hit": false,
+          "mrr": 0.0,
+          "timings_ms": {
+            "retrieve": 243,
+            "rerank": 129,
+            "rerank_wait": 0,
+            "synthesize": 3415,
+            "total": 3788
+          }
+        },
+        {
+          "id": "q14",
+          "section": "Roadmap",
+          "question": "Describe your roadmap for post-quantum cryptography in the sensor transport layer.",
+          "expected_source": [],
+          "expected_behavior": "refuse",
+          "decision": "refuse",
+          "answer": "The supplied documentation does not describe a post-quantum cryptography roadmap for the sensor transport layer. Please route this question to the relevant product security or cryptography SME.",
+          "reason": "The evidence only states that sensors connect outbound to regional ingest over HTTPS on port 443, optionally through a proxy or customer-operated aggregator. It does not address post-quantum cryptography plans.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            50
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 49,
+              "title": "product/reference-architecture.md",
+              "content": "## Data flow  \nSensors process traffic locally and forward metadata, not full packet capture, to the ingest layer. A typical sensor forwards between 1 and 3 percent of observed traffic volume as metadata.  \nFull packet capture is available as an optional sensor-local rolling buffer, retained on the sensor and never forwarded. Buffer depth depends on sensor storage, typically 4 to 72 hours.",
+              "chunk_index": 2,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.061317
+            },
+            {
+              "id": 50,
+              "title": "product/reference-architecture.md",
+              "content": "## Network requirements  \nSensors require outbound HTTPS on 443 to the regional ingest endpoint. No inbound connections to sensors are required.  \nWhere egress is restricted, sensors can forward through an HTTP proxy with authentication, or to a customer-operated aggregator that holds the single permitted egress path.  \nBandwidth from site to ingest should be provisioned at approximately 2 percent of monitored throughput, with a floor of 10 Mbps per site.",
+              "chunk_index": 3,
+              "rrf_score": 0.015385,
+              "rerank_score": 0.05939
+            },
+            {
+              "id": 52,
+              "title": "product/reference-architecture.md",
+              "content": "## High availability at the collection layer  \nSensors can be deployed in pairs receiving the same traffic mirror, with deduplication at ingest. Loss of one sensor in a pair causes no gap.  \nWhere a pair is not deployed, loss of a sensor creates a visibility gap for the duration of the outage. Sensors buffer locally for up to four hours when ingest is unreachable, so an ingest-side or network interruption shorter than that results in no data loss.",
+              "chunk_index": 5,
+              "rrf_score": 0.015152,
+              "rerank_score": 0.034336
+            }
+          ],
+          "retrieval_hit": null,
+          "mrr": null,
+          "timings_ms": {
+            "retrieve": 368,
+            "rerank": 1778,
+            "rerank_wait": 0,
+            "synthesize": 3087,
+            "total": 5234
+          }
+        },
+        {
+          "id": "q15",
+          "section": "Architecture",
+          "question": "Do you support Kubernetes admission controller integration for runtime policy enforcement?",
+          "expected_source": [],
+          "expected_behavior": "refuse",
+          "decision": "answer_partial",
+          "answer": "The supplied evidence does not establish support for Kubernetes admission controller integration for runtime policy enforcement. It confirms configurable webhooks for policy violations and other events, but does not state that these webhooks integrate with Kubernetes admission controllers or provide runtime enforcement.",
+          "reason": "The available integration documentation covers event webhooks only. Admission controller support and enforcement behavior require confirmation from an SME.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            98
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 98,
+              "title": "rfp-responses/integrations-and-apis.md",
+              "content": "## Are webhooks supported?  \nYes. Webhooks can be configured for detection events, asset state changes, policy violations, and administrative actions. Payloads are signed with HMAC-SHA256 using a per-endpoint secret.  \nDelivery is retried with exponential backoff for up to 24 hours. Undelivered events remain available through the API for the tenant's retention period.",
+              "chunk_index": 3,
+              "rrf_score": 0.013158,
+              "rerank_score": 0.046159
+            },
+            {
+              "id": 78,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## What are the minimum infrastructure requirements for self-managed?  \nA Kubernetes cluster at version 1.29 or later with at least three worker nodes of 8 vCPU and 32 GiB each, a PostgreSQL 15 or later instance with 500 GiB of storage, and an S3-compatible object store with 2 TiB of capacity.  \nThese figures size a deployment monitoring up to 10,000 assets. Sizing guidance for larger estates is provided during the architecture review.",
+              "chunk_index": 4,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.039008
+            },
+            {
+              "id": 107,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is the platform network segmented?  \nEach tenant's data plane runs in a logically isolated namespace with network policies that deny cross-tenant traffic by default. Control plane and data plane run in separate virtual networks connected only through an authenticated internal gateway.  \nProduction environments are isolated from staging and development at the account level, not merely at the network level. No production data is copied into lower environments under any circumstances.",
+              "chunk_index": 4,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.030795
+            }
+          ],
+          "retrieval_hit": null,
+          "mrr": null,
+          "timings_ms": {
+            "retrieve": 230,
+            "rerank": 137,
+            "rerank_wait": 0,
+            "synthesize": 1868,
+            "total": 2236
+          }
+        }
+      ],
+      "metrics": {
+        "decision_accuracy": {
+          "correct": 11,
+          "denominator": 15,
+          "percentage": 73.33
+        },
+        "failure_count": 0,
+        "decision_breakdown": {
+          "answer": {
+            "expected": 8,
+            "returned": 7
+          },
+          "answer_negative": {
+            "expected": 3,
+            "returned": 2
+          },
+          "answer_partial": {
+            "expected": 1,
+            "returned": 5
+          },
+          "redirect": {
+            "expected": 1,
+            "returned": 0
+          },
+          "refuse": {
+            "expected": 2,
+            "returned": 1
+          }
+        },
+        "retrieval": {
+          "eligible_questions": 13,
+          "hits": 12,
+          "hit_rate_percentage": 92.31,
+          "mrr": 0.923077
+        },
+        "top_1_rerank_score": {
+          "answerable": {
+            "mean_top_1_rerank_score": 0.590786,
+            "count": 12
+          },
+          "not_answerable": {
+            "mean_top_1_rerank_score": 0.235239,
+            "count": 3
+          }
+        },
+        "latency_ms": {
+          "retrieve": {
+            "p50": 254,
+            "p95": 392
+          },
+          "rerank": {
+            "p50": 158,
+            "p95": 1778
+          },
+          "synthesize": {
+            "p50": 2190,
+            "p95": 3415
+          },
+          "total": {
+            "p50": 2708,
+            "p95": 5234
+          }
+        }
+      }
+    },
+    {
+      "run": 3,
+      "results": [
+        {
+          "id": "q01",
+          "section": "Security",
+          "question": "What encryption standards are used to protect data at rest and in transit?",
+          "expected_source": [
+            "rfp-responses/security-architecture.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Data is protected using:\n\n- **At rest:** AES-256 in GCM mode for primary databases, object storage, backups, and snapshots. Encryption is enabled by default and keys rotate automatically every 90 days.\n- **In transit:** TLS 1.3 for all external connections. TLS 1.2 is allowed only for named legacy integrations upon written request, while TLS 1.1 and SSLv3 are refused. Internal service-to-service traffic uses mutual TLS, with certificates rotated every 30 days.",
+          "reason": "The security architecture documentation specifies the encryption standards and key or certificate rotation practices for data at rest, external connections, and internal traffic.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            104,
+            105
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 104,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is customer data encrypted at rest?  \nAll customer data at rest is encrypted using AES-256 in GCM mode. This applies to primary databases, object storage, backups, and snapshots. Encryption is enabled by default on every tenant and cannot be disabled.  \nKey rotation occurs automatically every 90 days. Previous key versions are retained for the duration of the backup retention window so that historical restores remain possible.",
+              "chunk_index": 1,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.744081
+            },
+            {
+              "id": 105,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is data encrypted in transit?  \nAll external connections require TLS 1.3. TLS 1.2 is accepted only for named legacy integrations and must be requested in writing. Older protocol versions, including TLS 1.1 and SSLv3, are refused at the load balancer.  \nInternal service-to-service traffic within the Northwind platform is encrypted with mutual TLS, with certificates issued by an internal certificate authority and rotated every 30 days.",
+              "chunk_index": 2,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.583797
+            },
+            {
+              "id": 22,
+              "title": "compliance/subprocessors.md",
+              "content": "## Platform services  \nCloudflare provides edge termination and denial of service protection in all regions. Data processed: connection metadata, no customer content at rest.  \nTwilio provides transactional SMS for multi-factor authentication where a customer has enabled SMS as a factor. Data processed: phone number and one-time code. US only.  \nSendGrid provides transactional email. Data processed: recipient address and message content for notifications. US only.",
+              "chunk_index": 2,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.087167
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 265,
+            "rerank": 180,
+            "rerank_wait": 0,
+            "synthesize": 1912,
+            "total": 2358
+          }
+        },
+        {
+          "id": "q02",
+          "section": "Identity",
+          "question": "Which single sign-on standards do you support, and is automated user provisioning available?",
+          "expected_source": [
+            "rfp-responses/identity-and-access.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Northwind supports SAML 2.0 and OpenID Connect (OIDC) for single sign-on. Both are included on all paid tiers at no additional cost.\n\nAutomated user provisioning and deprovisioning are available through SCIM 2.0. Identity provider groups can be mapped to Northwind roles, and SCIM deprovisioning revokes active sessions within 60 seconds.",
+          "reason": "The supplied identity and access documentation directly specifies the supported SSO standards and automated provisioning capabilities.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            82,
+            83
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 83,
+              "title": "rfp-responses/identity-and-access.md",
+              "content": "## Is automated user provisioning supported?  \nYes. Northwind supports SCIM 2.0 for automated provisioning and deprovisioning. Group membership from the identity provider can be mapped to Northwind roles, so access changes in the directory propagate without administrator action.  \nDeprovisioning through SCIM revokes active sessions within 60 seconds.",
+              "chunk_index": 2,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.816655
+            },
+            {
+              "id": 82,
+              "title": "rfp-responses/identity-and-access.md",
+              "content": "## What single sign-on standards are supported?  \nNorthwind supports SAML 2.0 and OpenID Connect for single sign-on. Both are available on all paid tiers at no additional cost.  \nTested and documented integrations exist for Okta, Microsoft Entra ID, Ping Identity, Google Workspace, and JumpCloud. Any identity provider conforming to SAML 2.0 or OIDC will work; the named providers simply have published setup guides.",
+              "chunk_index": 1,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.759601
+            },
+            {
+              "id": 85,
+              "title": "rfp-responses/identity-and-access.md",
+              "content": "## Is multi-factor authentication enforced?  \nWhen single sign-on is configured, multi-factor authentication is enforced by the customer's identity provider and Northwind honors that assertion.  \nFor customers not using single sign-on, Northwind enforces time-based one-time password authentication on all administrator accounts. This cannot be disabled. MFA on non-administrator local accounts is configurable per tenant and enabled by default.",
+              "chunk_index": 4,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.081908
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 364,
+            "rerank": 242,
+            "rerank_wait": 0,
+            "synthesize": 2260,
+            "total": 2868
+          }
+        },
+        {
+          "id": "q03",
+          "section": "Service Levels",
+          "question": "State your monthly uptime commitment and the service credits that apply if it is missed.",
+          "expected_source": [
+            "rfp-responses/availability-and-sla.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Monthly uptime commitments are 99.9% for Standard and Professional tiers, and 99.95% for Enterprise. If monthly availability falls below the applicable commitment, credits are applied against the following month\u2019s fees as follows:\n\n- 10% if availability is below the commitment but at or above 99.0%\n- 25% if availability is below 99.0% but at or above 95.0%\n- 50% if availability is below 95.0%\n\nCredits are the sole remedy for availability shortfalls and must be requested within 30 days of the affected month. Scheduled maintenance is excluded from uptime measurement.",
+          "reason": "The SLA evidence specifies tier-specific monthly uptime commitments, credit thresholds, and claim conditions.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            61,
+            62
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 62,
+              "title": "rfp-responses/availability-and-sla.md",
+              "content": "## What service credits apply if you miss the commitment?  \nCredits are applied against the following month's fees: 10% for availability below the commitment but at or above 99.0%, 25% below 99.0%, and 50% below 95.0%.  \nCredits are the sole remedy for availability shortfalls. A customer must request credits within 30 days of the affected month.",
+              "chunk_index": 2,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.782347
+            },
+            {
+              "id": 61,
+              "title": "rfp-responses/availability-and-sla.md",
+              "content": "## What uptime do you commit to?  \nThe Standard and Professional tiers carry a 99.9% monthly uptime commitment. The Enterprise tier carries 99.95%.  \nUptime is measured as the percentage of one-minute intervals in a calendar month during which the API and console are reachable and returning successful responses. Scheduled maintenance is excluded, and scheduled maintenance has not exceeded two hours per quarter in the last eight quarters.",
+              "chunk_index": 1,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.52627
+            },
+            {
+              "id": 11,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "## How to answer a certification question  \nState only what is held. Where something is not held, say so plainly and offer the nearest equivalent evidence. Do not describe a roadmap item as though it were current, and do not commit to a certification date.",
+              "chunk_index": 4,
+              "rrf_score": 0.013158,
+              "rerank_score": 0.066794
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 354,
+            "rerank": 870,
+            "rerank_wait": 0,
+            "synthesize": 2796,
+            "total": 4021
+          }
+        },
+        {
+          "id": "q04",
+          "section": "Data Residency",
+          "question": "In which geographic regions can our data be stored, and does any data leave the region we select?",
+          "expected_source": [
+            "rfp-responses/data-residency-and-privacy.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "You can select one of six home regions at provisioning:\n\n- US East, Virginia\n- US West, Oregon\n- EU Central, Frankfurt\n- EU West, Dublin\n- APAC Southeast, Singapore\n- APAC South, Sydney\n\nCustomer content, backups, and telemetry remain in the selected region. However, three limited categories of operational metadata are processed in US East regardless of the selected region: aggregate billing usage counters, platform health metrics, and support case metadata. This metadata does not contain customer content, asset names, network addresses, or user identities. A full replication schema is available under NDA.\n\nThe home region cannot be changed after provisioning without a migration engagement.",
+          "reason": "The data residency documentation identifies all available regions and distinguishes region-resident customer data from the limited operational metadata processed in US East.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            68,
+            69
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 68,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## In which regions can our data be stored?  \nNorthwind operates in six regions: US East (Virginia), US West (Oregon), EU Central (Frankfurt), EU West (Dublin), APAC Southeast (Singapore), and APAC South (Sydney).  \nThe customer selects a home region at provisioning. All customer data, including backups and telemetry, remains within that region. Region cannot be changed after provisioning without a migration engagement.",
+              "chunk_index": 1,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.849785
+            },
+            {
+              "id": 69,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## Does any customer data leave the selected region?  \nCustomer content does not leave the home region. Three categories of operational metadata are processed in US East regardless of home region: aggregate usage counters for billing, platform health metrics, and support case metadata.  \nNone of these contain customer content, asset names, network addresses, or user identities. A full schema of what is replicated is available under NDA.",
+              "chunk_index": 2,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.688238
+            },
+            {
+              "id": 21,
+              "title": "compliance/subprocessors.md",
+              "content": "## Infrastructure  \nAmazon Web Services provides compute, storage, and networking for US East, US West, EU West, and APAC Southeast. Data processed: all customer content in those regions.  \nMicrosoft Azure provides compute, storage, and networking for EU Central and APAC South. Data processed: all customer content in those regions.  \nBoth are engaged under their standard data processing terms with Standard Contractual Clauses where applicable.",
+              "chunk_index": 1,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.32963
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 329,
+            "rerank": 135,
+            "rerank_wait": 0,
+            "synthesize": 2571,
+            "total": 3036
+          }
+        },
+        {
+          "id": "q05",
+          "section": "Data Residency",
+          "question": "We require hosting in Germany with no customer data leaving the EU, and we must hold our own encryption keys. Is this supported, and on which commercial tier?",
+          "expected_source": [
+            "rfp-responses/data-residency-and-privacy.md",
+            "rfp-responses/security-architecture.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer_partial",
+          "answer": "Customer-managed encryption keys are supported on the Enterprise tier through AWS KMS or Azure Key Vault. They are not available on Standard or Professional. However, the supplied evidence does not confirm hosting specifically in Germany or guarantee that no customer data leaves the EU, so those residency requirements require SME confirmation.",
+          "reason": "The evidence establishes the tier for customer-managed keys, but does not address Germany hosting or EU-only data residency.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            106
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 106,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## Can we manage our own encryption keys?  \nCustomer-managed keys are available on the Enterprise tier. Northwind supports AWS KMS and Azure Key Vault as external key providers. The customer retains the ability to revoke key access, which renders tenant data unreadable to Northwind within 15 minutes.  \nCustomer-managed keys are not available on the Standard or Professional tiers, which use Northwind-managed keys with the rotation policy described above.",
+              "chunk_index": 3,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.695483
+            },
+            {
+              "id": 14,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Classification  \nData is classified in four tiers. Public covers published material. Internal covers operational data with no customer content. Confidential covers customer content, contracts, and security findings. Restricted covers credentials, encryption keys, and audit evidence.  \nHandling requirements escalate by tier. Restricted data may not be stored outside designated systems and may not be transmitted over email under any circumstances.",
+              "chunk_index": 2,
+              "rrf_score": 0.014706,
+              "rerank_score": 0.564315
+            },
+            {
+              "id": 104,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is customer data encrypted at rest?  \nAll customer data at rest is encrypted using AES-256 in GCM mode. This applies to primary databases, object storage, backups, and snapshots. Encryption is enabled by default on every tenant and cannot be disabled.  \nKey rotation occurs automatically every 90 days. Previous key versions are retained for the duration of the backup retention window so that historical restores remain possible.",
+              "chunk_index": 1,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.253542
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 272,
+            "rerank": 445,
+            "rerank_wait": 0,
+            "synthesize": 2558,
+            "total": 3275
+          }
+        },
+        {
+          "id": "q06",
+          "section": "Architecture",
+          "question": "Can your zero trust network access product be deployed entirely on our own infrastructure in an air-gapped environment?",
+          "expected_source": [
+            "product/gate-overview.md",
+            "rfp-responses/deployment-models.md"
+          ],
+          "expected_behavior": "answer_negative",
+          "decision": "answer_partial",
+          "answer": "The supplied evidence does not establish that Northwind Gate can be deployed entirely on your infrastructure in a fully air-gapped environment. Fully air-gapped operation is documented only for self-managed Sentinel and Northwind Core, using quarterly offline update bundles. Gate is identified as the zero trust network access product, but its supported deployment models are not provided.",
+          "reason": "Air-gapped support is documented for other named products, not for Gate. Confirmation from a product SME is required.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            40,
+            79,
+            41
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 40,
+              "title": "product/gate-overview.md",
+              "content": "# Northwind Gate  \nZero trust network access. Product overview maintained by Product Marketing, reviewed quarterly.",
+              "chunk_index": 0,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.278556
+            },
+            {
+              "id": 79,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## Can the platform run without internet connectivity?  \nSelf-managed deployments of Sentinel and Northwind Core can run with outbound connectivity restricted to a Northwind update endpoint and a license validation endpoint, both of which can be proxied. Threat intelligence feeds require periodic outbound access; customers can substitute an internally hosted feed mirror.  \nFully air-gapped operation, with no outbound connectivity at all, is supported for Sentinel and Northwind Core through an offline update bundle delivered quarterly.",
+              "chunk_index": 5,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.118396
+            },
+            {
+              "id": 41,
+              "title": "product/gate-overview.md",
+              "content": "## What Gate does  \nGate replaces network-level remote access with per-application access brokered on identity and device posture. A user authenticates once and reaches only the applications policy permits, with no route to anything else.  \nIt is most often deployed to retire a legacy VPN concentrator, or to give third-party contractors scoped access without issuing network credentials.",
+              "chunk_index": 1,
+              "rrf_score": 0.015385,
+              "rerank_score": 0.053586
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 259,
+            "rerank": 150,
+            "rerank_wait": 0,
+            "synthesize": 2866,
+            "total": 3277
+          }
+        },
+        {
+          "id": "q07",
+          "section": "Architecture",
+          "question": "What are the minimum infrastructure requirements for a self-managed deployment monitoring 30,000 assets?",
+          "expected_source": [
+            "rfp-responses/deployment-models.md"
+          ],
+          "expected_behavior": "answer_partial",
+          "decision": "answer_partial",
+          "answer": "The supplied evidence does not specify minimum infrastructure requirements for a self-managed deployment monitoring 30,000 assets. The documented baseline, sized only for up to 10,000 assets, is:\n\n- Kubernetes 1.29 or later\n- At least three worker nodes, each with 8 vCPU and 32 GiB RAM\n- PostgreSQL 15 or later with 500 GiB storage\n- An S3-compatible object store with 2 TiB capacity\n\nFor 30,000 assets, sizing must be determined during an architecture review. A professional services engagement is also required because the deployment is self-managed and exceeds 25,000 assets.",
+          "reason": "The approved documentation provides only a 10,000-asset baseline and requires architecture review for larger estates, so exact 30,000-asset minimums need professional services or architecture input.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            78,
+            91
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 78,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## What are the minimum infrastructure requirements for self-managed?  \nA Kubernetes cluster at version 1.29 or later with at least three worker nodes of 8 vCPU and 32 GiB each, a PostgreSQL 15 or later instance with 500 GiB of storage, and an S3-compatible object store with 2 TiB of capacity.  \nThese figures size a deployment monitoring up to 10,000 assets. Sizing guidance for larger estates is provided during the architecture review.",
+              "chunk_index": 4,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.537503
+            },
+            {
+              "id": 91,
+              "title": "rfp-responses/implementation-and-onboarding.md",
+              "content": "## Is professional services engagement mandatory?  \nA Launch package is included with every Enterprise subscription and covers the implementation described above. Standard and Professional tier customers can self-implement using published runbooks, or purchase the Launch package separately.  \nCustomers with more than 25,000 assets, more than three deployment regions, or a self-managed deployment are required to engage professional services.",
+              "chunk_index": 3,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.256136
+            },
+            {
+              "id": 59,
+              "title": "product/sentinel-overview.md",
+              "content": "## Scale  \nThe largest production Sentinel deployment monitors approximately 180,000 assets across 40 sites. Event ingest in that environment averages 1.2 million events per second at peak.",
+              "chunk_index": 6,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.185726
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 233,
+            "rerank": 265,
+            "rerank_wait": 0,
+            "synthesize": 2211,
+            "total": 2711
+          }
+        },
+        {
+          "id": "q08",
+          "section": "Implementation",
+          "question": "Describe how you would reconcile our existing configuration management database during implementation.",
+          "expected_source": [
+            "product/atlas-overview.md",
+            "rfp-responses/implementation-and-onboarding.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "During implementation, we would:\n\n1. Build a continuously updated inventory of devices communicating on the network, including agentless devices and devices that cannot accept an agent.\n2. Compare that observed inventory with your existing CMDB.\n3. Classify the results into three groups: assets present in both sources, observed assets missing from the CMDB, and CMDB records for assets that were never observed.\n4. Review the reconciliation output with your team, then either export it for manual remediation or write approved changes back to ServiceNow. Automatic write-back is disabled by default.\n5. Agree on success criteria at kickoff and validate them at go-live, including discovery coverage of at least 95% of known assets reconciled against the CMDB.",
+          "reason": "The supplied implementation and product documentation defines the inventory comparison process, discrepancy categories, output options, write-back default, and go-live reconciliation target.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            34,
+            38,
+            93
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 38,
+              "title": "product/atlas-overview.md",
+              "content": "## CMDB reconciliation  \nNorthwind Core compares its inventory against the customer's CMDB and reports three categories: assets present in both, assets observed but absent from the CMDB, and assets recorded in the CMDB but never observed.  \nReconciliation output can be written back to ServiceNow or exported for manual review. Automatic write-back is off by default.",
+              "chunk_index": 5,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.531088
+            },
+            {
+              "id": 93,
+              "title": "rfp-responses/implementation-and-onboarding.md",
+              "content": "## What does success look like at go-live?  \nThree criteria are agreed at kickoff and verified at go-live: discovery coverage of at least 95% of known assets reconciled against the customer's CMDB, false positive rate below an agreed threshold on the top ten detection categories, and at least five analysts certified on the platform.",
+              "chunk_index": 5,
+              "rrf_score": 0.015385,
+              "rerank_score": 0.390755
+            },
+            {
+              "id": 34,
+              "title": "product/atlas-overview.md",
+              "content": "## What Northwind Core does  \nNorthwind Core builds and maintains a continuously updated inventory of every device communicating on the network, including devices with no agent and devices that cannot accept one.  \nThe common failure it addresses is that the configuration management database is incomplete and stale. Northwind Core discovers what is actually present rather than what was recorded.",
+              "chunk_index": 1,
+              "rrf_score": 0.015625,
+              "rerank_score": 0.100023
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 237,
+            "rerank": 660,
+            "rerank_wait": 0,
+            "synthesize": 3527,
+            "total": 4425
+          }
+        },
+        {
+          "id": "q09",
+          "section": "Security",
+          "question": "If one of your support engineers needs to view our data while troubleshooting a case, what controls govern that access and will we be told?",
+          "expected_source": [
+            "rfp-responses/security-architecture.md",
+            "compliance/data-protection-policy.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "Support engineers have no standing access to your data. To troubleshoot an open case, an engineer must request time-bound access tied to that case, obtain approval from a second engineer, use a managed device with hardware-backed multi-factor authentication, and operate under least-privilege controls. The access automatically expires after four hours. Each elevation is logged, including the requester, approver, case reference, and records accessed.\n\nIf you are on the Enterprise tier, you receive these access logs through the audit API and can opt into real-time notifications. The supplied evidence does not state that customers on other tiers are notified.",
+          "reason": "The security and access-control documentation specifies the approval, authentication, duration, logging, and Enterprise notification controls.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            108,
+            15
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 108,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How do you protect against insider access to customer data?  \nNorthwind staff have no standing access to customer data. Access requires a time-bound elevation request tied to an open support case, approved by a second engineer, and automatically expires after four hours.  \nEvery elevation is logged with the requesting engineer, the approving engineer, the case reference, and the records accessed. Customers on the Enterprise tier receive these access logs through the audit API and can opt into real-time notification.",
+              "chunk_index": 5,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.497144
+            },
+            {
+              "id": 15,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Access control  \nAccess follows least privilege with mandatory quarterly recertification. Access to systems holding Confidential or Restricted data requires hardware-backed multi-factor authentication and is available only from managed devices.  \nStanding access to customer content is not granted to any role. Access is obtained through the time-bound elevation process described in the security architecture documentation.",
+              "chunk_index": 3,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.239412
+            },
+            {
+              "id": 23,
+              "title": "compliance/subprocessors.md",
+              "content": "## Business systems  \nZendesk provides the support case system. Data processed: support case content, which may contain customer-supplied diagnostic data. Customers on Enterprise can request region-restricted case handling.  \nAtlassian provides internal engineering issue tracking. Customer content is not permitted in engineering issues; diagnostic data is referenced by case identifier only.",
+              "chunk_index": 3,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.232389
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 310,
+            "rerank": 228,
+            "rerank_wait": 0,
+            "synthesize": 2198,
+            "total": 2738
+          }
+        },
+        {
+          "id": "q10",
+          "section": "Contractual",
+          "question": "What happens to our data if we terminate the agreement, and how soon is it destroyed?",
+          "expected_source": [
+            "rfp-responses/data-residency-and-privacy.md"
+          ],
+          "expected_behavior": "answer",
+          "decision": "answer",
+          "answer": "If the agreement is terminated, all customer data is deleted within 30 days. Any backups containing customer data age out within an additional 35 days, meaning backup copies may remain for up to 65 days after termination. A certificate of deletion is available upon request.",
+          "reason": "The documented retention policy specifies deletion timelines for active customer data and backups after contract termination.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            72
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 72,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## What is your data retention policy?  \nEvent data is retained for 90 days on Standard, 180 days on Professional, and 400 days on Enterprise. Configuration and audit records are retained for the life of the contract plus 90 days.  \nOn termination, all customer data is deleted within 30 days. Backups containing customer data age out within a further 35 days. A certificate of deletion is issued on request.",
+              "chunk_index": 5,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.602179
+            },
+            {
+              "id": 16,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Personnel  \nAll personnel complete security and privacy training at onboarding and annually thereafter. Background checks are performed where permitted by local law. All personnel are bound by confidentiality obligations surviving termination.  \nAccess is revoked within one hour of termination, and the revocation process is tested quarterly.",
+              "chunk_index": 4,
+              "rrf_score": 0.016129,
+              "rerank_score": 0.181075
+            },
+            {
+              "id": 106,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## Can we manage our own encryption keys?  \nCustomer-managed keys are available on the Enterprise tier. Northwind supports AWS KMS and Azure Key Vault as external key providers. The customer retains the ability to revoke key access, which renders tenant data unreadable to Northwind within 15 minutes.  \nCustomer-managed keys are not available on the Standard or Professional tiers, which use Northwind-managed keys with the rotation policy described above.",
+              "chunk_index": 3,
+              "rrf_score": 0.013158,
+              "rerank_score": 0.084682
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 312,
+            "rerank": 148,
+            "rerank_wait": 0,
+            "synthesize": 1541,
+            "total": 2003
+          }
+        },
+        {
+          "id": "q11",
+          "section": "Compliance",
+          "question": "Confirm that Northwind holds FedRAMP Moderate authorization and provide the package identifier.",
+          "expected_source": [
+            "compliance/certifications-and-attestations.md"
+          ],
+          "expected_behavior": "answer_negative",
+          "decision": "answer_negative",
+          "answer": "No. Northwind does not currently hold FedRAMP Moderate authorization, or FedRAMP authorization at any impact level. It is targeting Moderate authorization, but no date is committed. The evidence does not provide a package identifier.",
+          "reason": "The certification record explicitly states that FedRAMP authorization is not currently held.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            10
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 10,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "## Not currently held  \nFedRAMP: Northwind does not hold a FedRAMP authorization at any impact level. Northwind has engaged a third-party assessment organization and is targeting FedRAMP Moderate authorization. No date is committed and none should be represented to a customer.  \nStateRAMP: not held and not currently pursued.  \nIRAP, Australia: not assessed.  \nPCI DSS: Northwind does not process, store, or transmit cardholder data, and therefore holds no PCI DSS attestation. Where a customer's RFP asks for PCI compliance, the correct response is that Northwind is out of scope, not that it is compliant.  \nC5, Germany: not held. An equivalence mapping from ISO 27001 to C5 is available and has been accepted by two German customers, but this is not a substitute for attestation.",
+              "chunk_index": 3,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.567769
+            },
+            {
+              "id": 2,
+              "title": "approved-language/company-boilerplate.md",
+              "content": "## Company description  \nNorthwind Systems builds infrastructure and security software for organizations that need to see and control what is on their network. Founded in 2014 and headquartered in Austin, Texas, Northwind employs approximately 400 people across offices in Austin, Dublin, and Singapore.",
+              "chunk_index": 1,
+              "rrf_score": 0.013699,
+              "rerank_score": 0.143969
+            },
+            {
+              "id": 73,
+              "title": "rfp-responses/data-residency-and-privacy.md",
+              "content": "## Do you comply with CCPA?  \nYes. Northwind acts as a service provider under CCPA and does not sell or share personal information. The same export and deletion interfaces described above serve CCPA requests.",
+              "chunk_index": 6,
+              "rrf_score": 0.013889,
+              "rerank_score": 0.140466
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 248,
+            "rerank": 136,
+            "rerank_wait": 0,
+            "synthesize": 1852,
+            "total": 2237
+          }
+        },
+        {
+          "id": "q12",
+          "section": "Compliance",
+          "question": "Provide your PCI DSS Level 1 attestation of compliance.",
+          "expected_source": [
+            "compliance/certifications-and-attestations.md"
+          ],
+          "expected_behavior": "answer_negative",
+          "decision": "answer_negative",
+          "answer": "Northwind cannot provide a PCI DSS Level 1 Attestation of Compliance. Northwind does not process, store, or transmit cardholder data, so it is out of scope for PCI DSS and holds no PCI DSS attestation.",
+          "reason": "The authoritative certifications record explicitly states that Northwind is out of scope for PCI DSS and has no PCI DSS attestation.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            10
+          ],
+          "needs_sme_review": false,
+          "retrieved_context": [
+            {
+              "id": 10,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "## Not currently held  \nFedRAMP: Northwind does not hold a FedRAMP authorization at any impact level. Northwind has engaged a third-party assessment organization and is targeting FedRAMP Moderate authorization. No date is committed and none should be represented to a customer.  \nStateRAMP: not held and not currently pursued.  \nIRAP, Australia: not assessed.  \nPCI DSS: Northwind does not process, store, or transmit cardholder data, and therefore holds no PCI DSS attestation. Where a customer's RFP asks for PCI compliance, the correct response is that Northwind is out of scope, not that it is compliant.  \nC5, Germany: not held. An equivalence mapping from ISO 27001 to C5 is available and has been accepted by two German customers, but this is not a substitute for attestation.",
+              "chunk_index": 3,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.186836
+            },
+            {
+              "id": 7,
+              "title": "compliance/certifications-and-attestations.md",
+              "content": "# Certifications and Attestations  \nMaintained by Compliance. Last reviewed October 2026. This document is the authoritative list; do not assert a certification that does not appear here.",
+              "chunk_index": 0,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.112474
+            },
+            {
+              "id": 14,
+              "title": "compliance/data-protection-policy.md",
+              "content": "## Classification  \nData is classified in four tiers. Public covers published material. Internal covers operational data with no customer content. Confidential covers customer content, contracts, and security findings. Restricted covers credentials, encryption keys, and audit evidence.  \nHandling requirements escalate by tier. Restricted data may not be stored outside designated systems and may not be transmitted over email under any circumstances.",
+              "chunk_index": 2,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.091846
+            }
+          ],
+          "retrieval_hit": true,
+          "mrr": 1.0,
+          "timings_ms": {
+            "retrieve": 239,
+            "rerank": 241,
+            "rerank_wait": 0,
+            "synthesize": 2834,
+            "total": 3315
+          }
+        },
+        {
+          "id": "q13",
+          "section": "Commercial",
+          "question": "Provide three-year pricing for a 25,000 asset deployment including all professional services.",
+          "expected_source": [
+            "approved-language/company-boilerplate.md"
+          ],
+          "expected_behavior": "redirect",
+          "decision": "refuse",
+          "answer": "The supplied evidence does not provide subscription rates, professional services fees, or a three-year pricing calculation for 25,000 assets. Please route this request to the pricing or sales SME for a complete quote. The evidence only states that a Launch package is included with every Enterprise subscription, while mandatory professional services apply to deployments with more than 25,000 assets, more than three regions, or self-managed deployments.",
+          "reason": "A complete three-year price cannot be calculated from the supplied evidence because the required rates and deployment details are missing.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            91
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 91,
+              "title": "rfp-responses/implementation-and-onboarding.md",
+              "content": "## Is professional services engagement mandatory?  \nA Launch package is included with every Enterprise subscription and covers the implementation described above. Standard and Professional tier customers can self-implement using published runbooks, or purchase the Launch package separately.  \nCustomers with more than 25,000 assets, more than three deployment regions, or a self-managed deployment are required to engage professional services.",
+              "chunk_index": 3,
+              "rrf_score": 0.016393,
+              "rerank_score": 0.597961
+            },
+            {
+              "id": 39,
+              "title": "product/atlas-overview.md",
+              "content": "## Scale and performance  \nA single Northwind Core deployment supports up to 250,000 assets. Discovery of a newly connected device typically completes within 90 seconds of its first observed network activity.",
+              "chunk_index": 6,
+              "rrf_score": 0.014286,
+              "rerank_score": 0.138497
+            },
+            {
+              "id": 77,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## Which clouds are supported for self-managed deployment?  \nAWS and Azure are supported and documented. Google Cloud is supported on a best-effort basis; reference Terraform is not published for GCP and deployment requires a professional services engagement.",
+              "chunk_index": 3,
+              "rrf_score": 0.014493,
+              "rerank_score": 0.091164
+            }
+          ],
+          "retrieval_hit": false,
+          "mrr": 0.0,
+          "timings_ms": {
+            "retrieve": 200,
+            "rerank": 173,
+            "rerank_wait": 0,
+            "synthesize": 2897,
+            "total": 3271
+          }
+        },
+        {
+          "id": "q14",
+          "section": "Roadmap",
+          "question": "Describe your roadmap for post-quantum cryptography in the sensor transport layer.",
+          "expected_source": [],
+          "expected_behavior": "refuse",
+          "decision": "refuse",
+          "answer": "The supplied evidence does not document a post-quantum cryptography roadmap for the sensor transport layer. Please route this question to the relevant product security or cryptography SME.",
+          "reason": "The evidence only states that sensors use outbound HTTPS on port 443 to reach the regional ingest endpoint. It does not address post-quantum algorithms, migration plans, or timelines.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [
+            50
+          ],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 49,
+              "title": "product/reference-architecture.md",
+              "content": "## Data flow  \nSensors process traffic locally and forward metadata, not full packet capture, to the ingest layer. A typical sensor forwards between 1 and 3 percent of observed traffic volume as metadata.  \nFull packet capture is available as an optional sensor-local rolling buffer, retained on the sensor and never forwarded. Buffer depth depends on sensor storage, typically 4 to 72 hours.",
+              "chunk_index": 2,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.061317
+            },
+            {
+              "id": 50,
+              "title": "product/reference-architecture.md",
+              "content": "## Network requirements  \nSensors require outbound HTTPS on 443 to the regional ingest endpoint. No inbound connections to sensors are required.  \nWhere egress is restricted, sensors can forward through an HTTP proxy with authentication, or to a customer-operated aggregator that holds the single permitted egress path.  \nBandwidth from site to ingest should be provisioned at approximately 2 percent of monitored throughput, with a floor of 10 Mbps per site.",
+              "chunk_index": 3,
+              "rrf_score": 0.015385,
+              "rerank_score": 0.05939
+            },
+            {
+              "id": 52,
+              "title": "product/reference-architecture.md",
+              "content": "## High availability at the collection layer  \nSensors can be deployed in pairs receiving the same traffic mirror, with deduplication at ingest. Loss of one sensor in a pair causes no gap.  \nWhere a pair is not deployed, loss of a sensor creates a visibility gap for the duration of the outage. Sensors buffer locally for up to four hours when ingest is unreachable, so an ingest-side or network interruption shorter than that results in no data loss.",
+              "chunk_index": 5,
+              "rrf_score": 0.015152,
+              "rerank_score": 0.034336
+            }
+          ],
+          "retrieval_hit": null,
+          "mrr": null,
+          "timings_ms": {
+            "retrieve": 223,
+            "rerank": 249,
+            "rerank_wait": 0,
+            "synthesize": 1708,
+            "total": 2180
+          }
+        },
+        {
+          "id": "q15",
+          "section": "Architecture",
+          "question": "Do you support Kubernetes admission controller integration for runtime policy enforcement?",
+          "expected_source": [],
+          "expected_behavior": "refuse",
+          "decision": "refuse",
+          "answer": "The supplied evidence does not document Kubernetes admission controller integration for runtime policy enforcement. Please route this question to the relevant product or security SME for confirmation.",
+          "reason": "The evidence covers event webhooks, Kubernetes infrastructure requirements, and network segmentation, but not admission controller integration or runtime policy enforcement.",
+          "model_used": "gpt-5.6-sol",
+          "citations": [],
+          "needs_sme_review": true,
+          "retrieved_context": [
+            {
+              "id": 98,
+              "title": "rfp-responses/integrations-and-apis.md",
+              "content": "## Are webhooks supported?  \nYes. Webhooks can be configured for detection events, asset state changes, policy violations, and administrative actions. Payloads are signed with HMAC-SHA256 using a per-endpoint secret.  \nDelivery is retried with exponential backoff for up to 24 hours. Undelivered events remain available through the API for the tenant's retention period.",
+              "chunk_index": 3,
+              "rrf_score": 0.013158,
+              "rerank_score": 0.046159
+            },
+            {
+              "id": 78,
+              "title": "rfp-responses/deployment-models.md",
+              "content": "## What are the minimum infrastructure requirements for self-managed?  \nA Kubernetes cluster at version 1.29 or later with at least three worker nodes of 8 vCPU and 32 GiB each, a PostgreSQL 15 or later instance with 500 GiB of storage, and an S3-compatible object store with 2 TiB of capacity.  \nThese figures size a deployment monitoring up to 10,000 assets. Sizing guidance for larger estates is provided during the architecture review.",
+              "chunk_index": 4,
+              "rrf_score": 0.012987,
+              "rerank_score": 0.039008
+            },
+            {
+              "id": 107,
+              "title": "rfp-responses/security-architecture.md",
+              "content": "## How is the platform network segmented?  \nEach tenant's data plane runs in a logically isolated namespace with network policies that deny cross-tenant traffic by default. Control plane and data plane run in separate virtual networks connected only through an authenticated internal gateway.  \nProduction environments are isolated from staging and development at the account level, not merely at the network level. No production data is copied into lower environments under any circumstances.",
+              "chunk_index": 4,
+              "rrf_score": 0.015873,
+              "rerank_score": 0.030795
+            }
+          ],
+          "retrieval_hit": null,
+          "mrr": null,
+          "timings_ms": {
+            "retrieve": 236,
+            "rerank": 150,
+            "rerank_wait": 0,
+            "synthesize": 1813,
+            "total": 2200
+          }
+        }
+      ],
+      "metrics": {
+        "decision_accuracy": {
+          "correct": 12,
+          "denominator": 15,
+          "percentage": 80.0
+        },
+        "failure_count": 0,
+        "decision_breakdown": {
+          "answer": {
+            "expected": 8,
+            "returned": 7
+          },
+          "answer_negative": {
+            "expected": 3,
+            "returned": 2
+          },
+          "answer_partial": {
+            "expected": 1,
+            "returned": 3
+          },
+          "redirect": {
+            "expected": 1,
+            "returned": 0
+          },
+          "refuse": {
+            "expected": 2,
+            "returned": 3
+          }
+        },
+        "retrieval": {
+          "eligible_questions": 13,
+          "hits": 12,
+          "hit_rate_percentage": 92.31,
+          "mrr": 0.923077
+        },
+        "top_1_rerank_score": {
+          "answerable": {
+            "mean_top_1_rerank_score": 0.590785,
+            "count": 12
+          },
+          "not_answerable": {
+            "mean_top_1_rerank_score": 0.235146,
+            "count": 3
+          }
+        },
+        "latency_ms": {
+          "retrieve": {
+            "p50": 259,
+            "p95": 364
+          },
+          "rerank": {
+            "p50": 228,
+            "p95": 870
+          },
+          "synthesize": {
+            "p50": 2260,
+            "p95": 3527
+          },
+          "total": {
+            "p50": 2868,
+            "p95": 4425
+          }
+        }
+      }
+    }
+  ],
+  "aggregates": {
+    "per_run": [
+      {
+        "decision_accuracy": {
+          "correct": 12,
+          "denominator": 15,
+          "percentage": 80.0
+        },
+        "failure_count": 0,
+        "decision_breakdown": {
+          "answer": {
+            "expected": 8,
+            "returned": 7
+          },
+          "answer_negative": {
+            "expected": 3,
+            "returned": 2
+          },
+          "answer_partial": {
+            "expected": 1,
+            "returned": 3
+          },
+          "redirect": {
+            "expected": 1,
+            "returned": 0
+          },
+          "refuse": {
+            "expected": 2,
+            "returned": 3
+          }
+        },
+        "retrieval": {
+          "eligible_questions": 13,
+          "hits": 12,
+          "hit_rate_percentage": 92.31,
+          "mrr": 0.923077
+        },
+        "top_1_rerank_score": {
+          "answerable": {
+            "mean_top_1_rerank_score": 0.590795,
+            "count": 12
+          },
+          "not_answerable": {
+            "mean_top_1_rerank_score": 0.235146,
+            "count": 3
+          }
+        },
+        "latency_ms": {
+          "retrieve": {
+            "p50": 285,
+            "p95": 4095
+          },
+          "rerank": {
+            "p50": 179,
+            "p95": 1741
+          },
+          "synthesize": {
+            "p50": 2310,
+            "p95": 4110
+          },
+          "total": {
+            "p50": 3133,
+            "p95": 7306
+          }
+        }
+      },
+      {
+        "decision_accuracy": {
+          "correct": 11,
+          "denominator": 15,
+          "percentage": 73.33
+        },
+        "failure_count": 0,
+        "decision_breakdown": {
+          "answer": {
+            "expected": 8,
+            "returned": 7
+          },
+          "answer_negative": {
+            "expected": 3,
+            "returned": 2
+          },
+          "answer_partial": {
+            "expected": 1,
+            "returned": 5
+          },
+          "redirect": {
+            "expected": 1,
+            "returned": 0
+          },
+          "refuse": {
+            "expected": 2,
+            "returned": 1
+          }
+        },
+        "retrieval": {
+          "eligible_questions": 13,
+          "hits": 12,
+          "hit_rate_percentage": 92.31,
+          "mrr": 0.923077
+        },
+        "top_1_rerank_score": {
+          "answerable": {
+            "mean_top_1_rerank_score": 0.590786,
+            "count": 12
+          },
+          "not_answerable": {
+            "mean_top_1_rerank_score": 0.235239,
+            "count": 3
+          }
+        },
+        "latency_ms": {
+          "retrieve": {
+            "p50": 254,
+            "p95": 392
+          },
+          "rerank": {
+            "p50": 158,
+            "p95": 1778
+          },
+          "synthesize": {
+            "p50": 2190,
+            "p95": 3415
+          },
+          "total": {
+            "p50": 2708,
+            "p95": 5234
+          }
+        }
+      },
+      {
+        "decision_accuracy": {
+          "correct": 12,
+          "denominator": 15,
+          "percentage": 80.0
+        },
+        "failure_count": 0,
+        "decision_breakdown": {
+          "answer": {
+            "expected": 8,
+            "returned": 7
+          },
+          "answer_negative": {
+            "expected": 3,
+            "returned": 2
+          },
+          "answer_partial": {
+            "expected": 1,
+            "returned": 3
+          },
+          "redirect": {
+            "expected": 1,
+            "returned": 0
+          },
+          "refuse": {
+            "expected": 2,
+            "returned": 3
+          }
+        },
+        "retrieval": {
+          "eligible_questions": 13,
+          "hits": 12,
+          "hit_rate_percentage": 92.31,
+          "mrr": 0.923077
+        },
+        "top_1_rerank_score": {
+          "answerable": {
+            "mean_top_1_rerank_score": 0.590785,
+            "count": 12
+          },
+          "not_answerable": {
+            "mean_top_1_rerank_score": 0.235146,
+            "count": 3
+          }
+        },
+        "latency_ms": {
+          "retrieve": {
+            "p50": 259,
+            "p95": 364
+          },
+          "rerank": {
+            "p50": 228,
+            "p95": 870
+          },
+          "synthesize": {
+            "p50": 2260,
+            "p95": 3527
+          },
+          "total": {
+            "p50": 2868,
+            "p95": 4425
+          }
+        }
+      }
+    ],
+    "decision_stability": {
+      "stable_count": 13,
+      "total_questions": 15,
+      "unstable_questions": [
+        {
+          "id": "q13",
+          "question": "Provide three-year pricing for a 25,000 asset deployment including all professional services.",
+          "decisions": [
+            "answer_partial",
+            "refuse"
+          ],
+          "failure_count": 0
+        },
+        {
+          "id": "q15",
+          "question": "Do you support Kubernetes admission controller integration for runtime policy enforcement?",
+          "decisions": [
+            "answer_partial",
+            "refuse"
+          ],
+          "failure_count": 0
+        }
+      ]
+    }
+  }
+}
