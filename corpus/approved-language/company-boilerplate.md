@@ -4,13 +4,13 @@ Maintained by Marketing and Legal. This is the only approved wording for company
 
 ## Company description
 
-Halebrook Systems builds infrastructure and security software for organizations that need to see and control what is on their network. Founded in 2014 and headquartered in Austin, Texas, Halebrook employs approximately 400 people across offices in Austin, Dublin, and Singapore.
+Northwind Systems builds infrastructure and security software for organizations that need to see and control what is on their network. Founded in 2014 and headquartered in Austin, Texas, Northwind employs approximately 400 people across offices in Austin, Dublin, and Singapore.
 
 ## Scale claims, approved
 
-More than 600 organizations use Halebrook products.
+More than 600 organizations use Northwind products.
 
-Halebrook monitors more than 11 million assets across its customer base.
+Northwind monitors more than 11 million assets across its customer base.
 
 The largest single deployment monitors approximately 180,000 assets.
 
@@ -34,7 +34,7 @@ Do not claim 100% detection coverage, zero false positives, or any specific dete
 
 Do not commit to a roadmap date. Approved phrasing for roadmap items is that the capability is under development with no committed date.
 
-Do not compare Halebrook to a named competitor in writing.
+Do not compare Northwind to a named competitor in writing.
 
 ## Pricing
 

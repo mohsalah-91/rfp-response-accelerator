@@ -1,4 +1,4 @@
-# Halebrook Gate
+# Northwind Gate
 
 Zero trust network access. Product overview maintained by Product Marketing, reviewed quarterly.
 
@@ -10,7 +10,7 @@ It is most often deployed to retire a legacy VPN concentrator, or to give third-
 
 ## Architecture
 
-Gate has three components. The client runs on the user's device. The connector is a lightweight process deployed adjacent to each protected application, which makes only outbound connections. The broker is a Halebrook-operated service that authenticates and authorizes sessions.
+Gate has three components. The client runs on the user's device. The connector is a lightweight process deployed adjacent to each protected application, which makes only outbound connections. The broker is a Northwind-operated service that authenticates and authorizes sessions.
 
 Because connectors dial out, no inbound firewall rules are required and protected applications need no public exposure.
 
@@ -32,4 +32,4 @@ Browser-based access without a client is available for web applications and for 
 
 ## Deployment model
 
-Gate is available as SaaS and as private cloud. Self-managed deployment of the Gate broker is not currently available; the broker is operated by Halebrook in all configurations. Connectors always run in the customer's environment.
+Gate is available as SaaS and as private cloud. Self-managed deployment of the Gate broker is not currently available; the broker is operated by Northwind in all configurations. Connectors always run in the customer's environment.

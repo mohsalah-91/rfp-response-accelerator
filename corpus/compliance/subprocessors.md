@@ -1,6 +1,6 @@
 # Subprocessors
 
-Maintained by Legal. Current as of October 2026. The authoritative list is published at halebrook.example/subprocessors.
+Maintained by Legal. Current as of October 2026. The authoritative list is published at northwind.example/subprocessors.
 
 ## Infrastructure
 
@@ -26,7 +26,7 @@ Atlassian provides internal engineering issue tracking. Customer content is not 
 
 ## Notification of changes
 
-Halebrook notifies customers at least 30 days before adding or replacing a subprocessor that will process customer content. Notification is through the administrator channel and the published subprocessor page, which offers subscription.
+Northwind notifies customers at least 30 days before adding or replacing a subprocessor that will process customer content. Notification is through the administrator channel and the published subprocessor page, which offers subscription.
 
 A customer may object to a new subprocessor within the notice period. Where an objection cannot be resolved, the customer may terminate the affected service without penalty for the remainder of the term.
 

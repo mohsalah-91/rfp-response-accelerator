@@ -2,7 +2,7 @@
 
 A FastAPI application for evidence-grounded RFP drafting using the **OpenAI Responses API with Pydantic Structured Outputs**.
 
-The application retrieves relevant enterprise documentation, reranks it, and generates an answer with an explicit decision, source references, and a review flag. The supplied corpus describes **Halebrook Systems**, a fictional infrastructure and security software vendor. The corpus is synthetic sample data, not a set of verified claims about a real company.
+The application retrieves relevant enterprise documentation, reranks it, and generates an answer with an explicit decision, source references, and a review flag. The supplied corpus describes **Northwind Systems**, a fictional infrastructure and security software vendor. The corpus is synthetic sample data, not a set of verified claims about a real company.
 
 ## Architecture
 
@@ -207,6 +207,18 @@ Mocked tests cover structured response handling, failure paths, citation integri
 
 Representative manual live checks have exercised corpus ingestion, retrieval/reranking, deployment answers, and explicit FedRAMP non-authorization. These are integration examples, not a systematic evaluation of answer quality across the dataset. Mocked tests cannot establish model decision accuracy.
 
+### Run the labeled evaluation
+
+After starting PostgreSQL, ingesting the sample corpus once, and configuring live provider credentials, run the evaluator directly against the retrieval and answer pipeline:
+
+```powershell
+python -m eval.run_eval
+python -m eval.run_eval --runs 3
+python -m eval.run_eval --runs 3 --top-k 5 --out eval/results.json
+```
+
+The evaluator opens and closes its own database pool; the FastAPI server does not need to be running. It prints progress because each question makes live embedding, Cohere reranking, and answer-synthesis calls. The output reports decision accuracy over successful questions, expected-versus-returned decision counts, retrieval hit rate and MRR for questions with expected sources, top rerank-score means for answerable versus non-answerable labels, and latency percentiles. Repeated runs also report decision stability and list questions whose decisions varied. The JSON artifact includes every per-question result and per-run aggregate for comparison across changes. This is a live evaluation with provider costs, not a mocked test.
+
 ## Try the application
 
 Complete setup and ingest the sample corpus once, then keep the database and API running. The browser interface at http://127.0.0.1:8000/ui is the direct question-submission workflow. Alternatively, open http://127.0.0.1:8000/docs and expand **POST /documents/answer**. Select **Try it out**, enter one of the requests below, and select **Execute**.
@@ -227,7 +239,7 @@ Example answer requests:
 ```
 
 ```json
-{"query": "Confirm that Halebrook holds FedRAMP Moderate authorization and provide the package identifier.", "top_k": 3}
+{"query": "Confirm that Northwind holds FedRAMP Moderate authorization and provide the package identifier.", "top_k": 3}
 ```
 
 ```json
@@ -257,7 +269,7 @@ app/                         FastAPI, configuration, retrieval, ingestion, answe
 app/static/index.html        Browser interface markup served at /ui
 app/static/app.js            Browser question submission and answer/evidence rendering
 app/static/styles.css        Browser interface styles
-corpus/                      Synthetic Halebrook source documents
+corpus/                      Synthetic Northwind source documents
 incoming-rfp/questions.jsonl  Questions and expected behaviors/sources
 migrations/                  Database migrations applied on startup
 scripts/ingest_corpus.py      Corpus ingestion client

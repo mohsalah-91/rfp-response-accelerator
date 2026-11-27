@@ -24,9 +24,9 @@ Customers with more than 25,000 assets, more than three deployment regions, or a
 
 ## How do you handle migration from an incumbent tool?
 
-Halebrook provides a migration utility that imports asset inventory and suppression rules from several common platforms, which shortens the tuning phase.
+Northwind provides a migration utility that imports asset inventory and suppression rules from several common platforms, which shortens the tuning phase.
 
-Detection logic is not migrated automatically. Halebrook's detection content is maintained by its own research team, and the implementation includes a mapping exercise to confirm that the customer's existing use cases are covered before the incumbent is decommissioned.
+Detection logic is not migrated automatically. Northwind's detection content is maintained by its own research team, and the implementation includes a mapping exercise to confirm that the customer's existing use cases are covered before the incumbent is decommissioned.
 
 A parallel-run period of four weeks is recommended and is included in the Launch package.
 

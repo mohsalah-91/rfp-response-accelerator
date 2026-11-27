@@ -1,4 +1,4 @@
-# Halebrook Sentinel
+# Northwind Sentinel
 
 Network detection and response. Product overview maintained by Product Marketing, reviewed quarterly.
 
@@ -18,13 +18,13 @@ Sensors are also available as cloud-native collectors for AWS VPC Traffic Mirror
 
 Three layers operate together. Signature detection covers known indicators and is updated every four hours. Behavioral analytics model per-asset baselines over a 30-day rolling window and flag deviations. Protocol analysis identifies misuse of legitimate protocols, such as DNS tunneling or unusual SMB access patterns.
 
-Detection content is authored by Halebrook's research team and mapped to MITRE ATT&CK technique identifiers. Customers can author custom detections in the Sentinel query language.
+Detection content is authored by Northwind's research team and mapped to MITRE ATT&CK technique identifiers. Customers can author custom detections in the Sentinel query language.
 
 ## Encrypted traffic
 
 Sentinel analyzes encrypted traffic without decryption, using JA4 fingerprinting, certificate metadata, and flow characteristics. Decryption is optional and requires the customer to provide keys or deploy a decryption appliance upstream.
 
-Detection coverage on encrypted traffic without decryption is meaningfully narrower. Halebrook publishes which detection categories require visibility into payload.
+Detection coverage on encrypted traffic without decryption is meaningfully narrower. Northwind publishes which detection categories require visibility into payload.
 
 ## Response actions
 

@@ -32,12 +32,12 @@ Phone support is available on Premium and Elite for Severity 1 and Severity 2 ca
 
 ## Where is your support team located?
 
-Support operates from Austin, Dublin, and Singapore, providing follow-the-sun coverage for Premium and Elite. All support engineers are Halebrook employees; no support function is outsourced.
+Support operates from Austin, Dublin, and Singapore, providing follow-the-sun coverage for Premium and Elite. All support engineers are Northwind employees; no support function is outsourced.
 
 Customers with data residency requirements can request region-restricted support, which limits case handling to engineers located in the customer's home region. This is available on Enterprise and may extend response times outside that region's business hours.
 
 ## What training is provided?
 
-Onboarding includes four hours of live administrator training and eight hours of analyst training, delivered remotely. Recorded courses and certification paths are available at no cost through the Halebrook learning portal.
+Onboarding includes four hours of live administrator training and eight hours of analyst training, delivered remotely. Recorded courses and certification paths are available at no cost through the Northwind learning portal.
 
 On-site training is available as a professional services engagement.

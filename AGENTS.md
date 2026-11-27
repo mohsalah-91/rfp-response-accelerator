@@ -6,7 +6,7 @@
 - `migrations/` — SQL migrations applied during FastAPI startup.
 - `scripts/ingest_corpus.py` — client for ingesting the tracked sample corpus.
 - `tests/` — standard-library `unittest` coverage for health, import/tokenizer behavior, structured answer handling, and the browser UI/static assets (`test_ui.py`).
-- `corpus/` — tracked synthetic Halebrook markdown source data. Do not alter corpus files unless the task explicitly requests it.
+- `corpus/` — tracked synthetic Northwind markdown source data. Do not alter corpus files unless the task explicitly requests it.
 - `incoming-rfp/` — labeled sample questions, recorded live-request examples, and their documentation.
 - `docker-compose.yml` — local PostgreSQL with pgvector. `.env.example` contains sanitized configuration examples.
 

@@ -12,13 +12,13 @@ Key rotation occurs automatically every 90 days. Previous key versions are retai
 
 All external connections require TLS 1.3. TLS 1.2 is accepted only for named legacy integrations and must be requested in writing. Older protocol versions, including TLS 1.1 and SSLv3, are refused at the load balancer.
 
-Internal service-to-service traffic within the Halebrook platform is encrypted with mutual TLS, with certificates issued by an internal certificate authority and rotated every 30 days.
+Internal service-to-service traffic within the Northwind platform is encrypted with mutual TLS, with certificates issued by an internal certificate authority and rotated every 30 days.
 
 ## Can we manage our own encryption keys?
 
-Customer-managed keys are available on the Enterprise tier. Halebrook supports AWS KMS and Azure Key Vault as external key providers. The customer retains the ability to revoke key access, which renders tenant data unreadable to Halebrook within 15 minutes.
+Customer-managed keys are available on the Enterprise tier. Northwind supports AWS KMS and Azure Key Vault as external key providers. The customer retains the ability to revoke key access, which renders tenant data unreadable to Northwind within 15 minutes.
 
-Customer-managed keys are not available on the Standard or Professional tiers, which use Halebrook-managed keys with the rotation policy described above.
+Customer-managed keys are not available on the Standard or Professional tiers, which use Northwind-managed keys with the rotation policy described above.
 
 ## How is the platform network segmented?
 
@@ -28,6 +28,6 @@ Production environments are isolated from staging and development at the account
 
 ## How do you protect against insider access to customer data?
 
-Halebrook staff have no standing access to customer data. Access requires a time-bound elevation request tied to an open support case, approved by a second engineer, and automatically expires after four hours.
+Northwind staff have no standing access to customer data. Access requires a time-bound elevation request tied to an open support case, approved by a second engineer, and automatically expires after four hours.
 
 Every elevation is logged with the requesting engineer, the approving engineer, the case reference, and the records accessed. Customers on the Enterprise tier receive these access logs through the audit API and can opt into real-time notification.

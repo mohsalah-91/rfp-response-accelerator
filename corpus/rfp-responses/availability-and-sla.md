@@ -36,4 +36,4 @@ Customer-visible changes are announced at least 10 business days in advance thro
 
 ## Do you provide a status page?
 
-Yes, at status.halebrook.example, with component-level status, incident history, and subscription by email, webhook, or RSS. Incident post-mortems for Severity 1 events are published within five business days.
+Yes, at status.northwind.example, with component-level status, incident history, and subscription by email, webhook, or RSS. Incident post-mortems for Severity 1 events are published within five business days.

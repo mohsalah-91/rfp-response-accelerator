@@ -14,21 +14,21 @@ Cyber Essentials Plus, United Kingdom, renewed February 2026.
 
 ## Regulatory alignment
 
-GDPR: Halebrook acts as a processor. A Data Processing Addendum with 2021 Standard Contractual Clauses is available.
+GDPR: Northwind acts as a processor. A Data Processing Addendum with 2021 Standard Contractual Clauses is available.
 
-CCPA and CPRA: Halebrook acts as a service provider and does not sell or share personal information.
+CCPA and CPRA: Northwind acts as a service provider and does not sell or share personal information.
 
-HIPAA: a Business Associate Agreement is available on the Enterprise tier only. Halebrook does not execute a BAA on Standard or Professional.
+HIPAA: a Business Associate Agreement is available on the Enterprise tier only. Northwind does not execute a BAA on Standard or Professional.
 
 ## Not currently held
 
-FedRAMP: Halebrook does not hold a FedRAMP authorization at any impact level. Halebrook has engaged a third-party assessment organization and is targeting FedRAMP Moderate authorization. No date is committed and none should be represented to a customer.
+FedRAMP: Northwind does not hold a FedRAMP authorization at any impact level. Northwind has engaged a third-party assessment organization and is targeting FedRAMP Moderate authorization. No date is committed and none should be represented to a customer.
 
 StateRAMP: not held and not currently pursued.
 
 IRAP, Australia: not assessed.
 
-PCI DSS: Halebrook does not process, store, or transmit cardholder data, and therefore holds no PCI DSS attestation. Where a customer's RFP asks for PCI compliance, the correct response is that Halebrook is out of scope, not that it is compliant.
+PCI DSS: Northwind does not process, store, or transmit cardholder data, and therefore holds no PCI DSS attestation. Where a customer's RFP asks for PCI compliance, the correct response is that Northwind is out of scope, not that it is compliant.
 
 C5, Germany: not held. An equivalence mapping from ISO 27001 to C5 is available and has been accepted by two German customers, but this is not a substitute for attestation.
 

@@ -1,16 +1,16 @@
-# Halebrook Atlas
+# Northwind Core
 
 Asset inventory and discovery. Product overview maintained by Product Marketing, reviewed quarterly.
 
-## What Atlas does
+## What Northwind Core does
 
-Atlas builds and maintains a continuously updated inventory of every device communicating on the network, including devices with no agent and devices that cannot accept one.
+Northwind Core builds and maintains a continuously updated inventory of every device communicating on the network, including devices with no agent and devices that cannot accept one.
 
-The common failure it addresses is that the configuration management database is incomplete and stale. Atlas discovers what is actually present rather than what was recorded.
+The common failure it addresses is that the configuration management database is incomplete and stale. Northwind Core discovers what is actually present rather than what was recorded.
 
 ## Discovery methods
 
-Atlas discovers passively from network traffic observed by Sentinel sensors, which requires no scanning and no credentials. It supplements this with optional active discovery through authenticated and unauthenticated scanning.
+Northwind Core discovers passively from network traffic observed by Sentinel sensors, which requires no scanning and no credentials. It supplements this with optional active discovery through authenticated and unauthenticated scanning.
 
 It also ingests inventory from external sources: endpoint platforms, cloud provider APIs, virtualization platforms, directory services, and existing CMDBs.
 
@@ -24,14 +24,14 @@ Unmanaged and operational technology devices, including building systems, medica
 
 Each asset carries a composite risk score from exposure, known vulnerabilities, observed behavior, and business criticality assigned by the customer.
 
-Scoring weights are configurable. Halebrook publishes the scoring model rather than treating it as proprietary, because customers consistently need to explain to auditors why a given asset is rated as it is.
+Scoring weights are configurable. Northwind publishes the scoring model rather than treating it as proprietary, because customers consistently need to explain to auditors why a given asset is rated as it is.
 
 ## CMDB reconciliation
 
-Atlas compares its inventory against the customer's CMDB and reports three categories: assets present in both, assets observed but absent from the CMDB, and assets recorded in the CMDB but never observed.
+Northwind Core compares its inventory against the customer's CMDB and reports three categories: assets present in both, assets observed but absent from the CMDB, and assets recorded in the CMDB but never observed.
 
 Reconciliation output can be written back to ServiceNow or exported for manual review. Automatic write-back is off by default.
 
 ## Scale and performance
 
-A single Atlas deployment supports up to 250,000 assets. Discovery of a newly connected device typically completes within 90 seconds of its first observed network activity.
+A single Northwind Core deployment supports up to 250,000 assets. Discovery of a newly connected device typically completes within 90 seconds of its first observed network activity.

@@ -4,15 +4,15 @@ Responses drawn from the Lindhaus Group RFP (2025) and the Caldwell Municipal Ut
 
 ## What deployment models do you offer?
 
-Three models. Multi-tenant SaaS is the default and accounts for the majority of deployments. Private cloud is a single-tenant deployment in a dedicated account within a Halebrook-operated region. Self-managed is a customer-operated deployment in the customer's own cloud account.
+Three models. Multi-tenant SaaS is the default and accounts for the majority of deployments. Private cloud is a single-tenant deployment in a dedicated account within a Northwind-operated region. Self-managed is a customer-operated deployment in the customer's own cloud account.
 
 All three run the same product build. Feature parity is maintained within one release of each other.
 
 ## What is the difference between private cloud and self-managed?
 
-In private cloud, Halebrook operates the infrastructure in a dedicated account and retains responsibility for patching, upgrades, and availability. The SLA applies unchanged.
+In private cloud, Northwind operates the infrastructure in a dedicated account and retains responsibility for patching, upgrades, and availability. The SLA applies unchanged.
 
-In self-managed, the customer operates the infrastructure. Halebrook provides the container images, Helm charts, and reference Terraform. The availability SLA does not apply, since Halebrook does not control the environment. Support covers the software, not the customer's infrastructure.
+In self-managed, the customer operates the infrastructure. Northwind provides the container images, Helm charts, and reference Terraform. The availability SLA does not apply, since Northwind does not control the environment. Support covers the software, not the customer's infrastructure.
 
 ## Which clouds are supported for self-managed deployment?
 
@@ -26,12 +26,12 @@ These figures size a deployment monitoring up to 10,000 assets. Sizing guidance 
 
 ## Can the platform run without internet connectivity?
 
-Self-managed deployments of Sentinel and Atlas can run with outbound connectivity restricted to a Halebrook update endpoint and a license validation endpoint, both of which can be proxied. Threat intelligence feeds require periodic outbound access; customers can substitute an internally hosted feed mirror.
+Self-managed deployments of Sentinel and Northwind Core can run with outbound connectivity restricted to a Northwind update endpoint and a license validation endpoint, both of which can be proxied. Threat intelligence feeds require periodic outbound access; customers can substitute an internally hosted feed mirror.
 
-Fully air-gapped operation, with no outbound connectivity at all, is supported for Sentinel and Atlas through an offline update bundle delivered quarterly.
+Fully air-gapped operation, with no outbound connectivity at all, is supported for Sentinel and Northwind Core through an offline update bundle delivered quarterly.
 
 ## How are upgrades handled?
 
-SaaS and private cloud are upgraded by Halebrook. SaaS follows a continuous release cadence; private cloud customers choose a monthly maintenance window.
+SaaS and private cloud are upgraded by Northwind. SaaS follows a continuous release cadence; private cloud customers choose a monthly maintenance window.
 
-Self-managed customers control their own upgrade schedule. Halebrook supports the current release and the two preceding minor releases. Running more than three releases behind places a deployment outside support.
+Self-managed customers control their own upgrade schedule. Northwind supports the current release and the two preceding minor releases. Running more than three releases behind places a deployment outside support.

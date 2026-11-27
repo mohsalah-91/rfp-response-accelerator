@@ -6,7 +6,7 @@ Maintained by Solutions Architecture. Current as of release 7.4.
 
 The platform separates into four layers: collection, ingest, analysis, and presentation.
 
-Collection comprises Sentinel sensors, Atlas discovery, Gate connectors, and external data ingestion. Collection components run in the customer environment in every deployment model.
+Collection comprises Sentinel sensors, Northwind Core discovery, Gate connectors, and external data ingestion. Collection components run in the customer environment in every deployment model.
 
 Ingest normalizes, enriches, and routes events. Analysis applies detection content, behavioral models, and risk scoring. Presentation covers the console, the API, and outbound integrations.
 
@@ -28,7 +28,7 @@ Bandwidth from site to ingest should be provisioned at approximately 2 percent o
 
 A customer operating in several geographies can deploy sensors in each and forward to a single home region, or can operate separate tenants per region where data residency rules prohibit consolidation.
 
-Cross-tenant reporting for separate regional tenants is available through the API and is the customer's responsibility to assemble. Halebrook does not aggregate across tenants.
+Cross-tenant reporting for separate regional tenants is available through the API and is the customer's responsibility to assemble. Northwind does not aggregate across tenants.
 
 ## High availability at the collection layer
 

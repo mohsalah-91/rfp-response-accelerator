@@ -4,7 +4,7 @@ Responses drawn from the Ardent Financial Group RFP (2025) and the Northgate Log
 
 ## Do you provide a public API?
 
-Yes. Halebrook exposes a REST API covering every function available in the console, documented with an OpenAPI 3.1 specification published at docs.halebrook.example.
+Yes. Northwind exposes a REST API covering every function available in the console, documented with an OpenAPI 3.1 specification published at docs.northwind.example.
 
 The API is versioned in the path. A version is supported for a minimum of 24 months after the release of its successor, and deprecation notices are issued at least 12 months in advance.
 
@@ -24,19 +24,19 @@ Delivery is retried with exponential backoff for up to 24 hours. Undelivered eve
 
 Certified integrations exist for Splunk Enterprise and Splunk Cloud, Microsoft Sentinel, Elastic Security, Sumo Logic, and Google SecOps. Each ships as a vendor-published app or content pack.
 
-For platforms without a certified integration, Halebrook can forward events in CEF or JSON over syslog, or to an S3 bucket the customer controls.
+For platforms without a certified integration, Northwind can forward events in CEF or JSON over syslog, or to an S3 bucket the customer controls.
 
 ## What ITSM and collaboration integrations are available?
 
-ServiceNow and Jira Service Management are supported with bidirectional sync: Halebrook creates tickets on detection, and ticket closure updates the Halebrook case.
+ServiceNow and Jira Service Management are supported with bidirectional sync: Northwind creates tickets on detection, and ticket closure updates the Northwind case.
 
 PagerDuty and Opsgenie are supported for alerting. Slack and Microsoft Teams are supported for notification and for a limited set of response actions approved by the customer.
 
 ## Do you integrate with endpoint detection tools?
 
-Halebrook Atlas ingests asset inventory from CrowdStrike Falcon, SentinelOne, and Microsoft Defender for Endpoint, which improves discovery coverage for managed endpoints.
+Northwind Core ingests asset inventory from CrowdStrike Falcon, SentinelOne, and Microsoft Defender for Endpoint, which improves discovery coverage for managed endpoints.
 
-Halebrook Sentinel can trigger containment actions through CrowdStrike and Defender where the customer has enabled that permission.
+Northwind Sentinel can trigger containment actions through CrowdStrike and Defender where the customer has enabled that permission.
 
 ## Can data be exported in bulk?
 

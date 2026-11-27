@@ -4,7 +4,7 @@ Maintained by Legal and Privacy. Summary of the internal policy, approved for ex
 
 ## Scope
 
-This policy covers all customer content processed by the Halebrook platform, all personal data of customer personnel held for account administration, and all data held by subprocessors.
+This policy covers all customer content processed by the Northwind platform, all personal data of customer personnel held for account administration, and all data held by subprocessors.
 
 ## Classification
 
@@ -32,7 +32,7 @@ Notification includes what is known, what is not yet known, and what action the 
 
 ## Breach notification under GDPR
 
-Where Halebrook becomes aware of a personal data breach, the controller is notified without undue delay and in any event within 48 hours, to allow the controller to meet its own 72-hour obligation.
+Where Northwind becomes aware of a personal data breach, the controller is notified without undue delay and in any event within 48 hours, to allow the controller to meet its own 72-hour obligation.
 
 ## Secure development
 
