@@ -32,6 +32,13 @@
   let batchInProgress = false;
   let batchResponses = [];
   let batchQuestionCatalog = [];
+  const batchDecisionLabels = {
+    answer: "Answered",
+    answer_negative: "Documented no",
+    answer_partial: "Partial answer",
+    redirect: "Route by policy",
+    refuse: "Insufficient evidence",
+  };
 
   function clearElement(element) { element.replaceChildren(); }
 
@@ -165,6 +172,9 @@
     answerText.textContent = data.answer || "";
     decisionRail.querySelectorAll(".decision-rail-item").forEach((item) => {
       item.classList.toggle("is-active", item.dataset.decision === data.decision);
+      const label = batchDecisionLabel(item.dataset.decision);
+      item.querySelector(".decision-rail-label").textContent = label;
+      item.setAttribute("aria-label", `${label} decision`);
     });
     reasonText.textContent = `Reason: ${data.reason || "No reason was returned."}`;
     modelText.textContent = `Model: ${data.model_used || "Not provided"}`;
@@ -217,18 +227,40 @@
     return "The application could not process this question. Check service availability and retry.";
   }
 
+  function batchDecisionLabel(decision) {
+    return batchDecisionLabels[decision] || "No decision";
+  }
+
+  function normalizeQuestionText(value) {
+    return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+  }
+
+  function parseBatchLine(value) {
+    const trimmed = value.trim();
+    const labeled = trimmed.match(/^(q\d+)\s*:\s*(.+)$/i);
+    if (labeled) return { explicitId: labeled[1], question: labeled[2].trim() };
+    const numbered = trimmed.match(/^\d+[.)]\s+(.+)$/);
+    return { explicitId: null, question: numbered ? numbered[1].trim() : trimmed };
+  }
+
   function parseBatchQuestions() {
-    return batchQuestions.value.split(/\r?\n/).map((line, index) => {
-      const trimmed = line.trim();
-      if (!trimmed) return null;
-      const match = trimmed.match(/^([A-Za-z0-9_-]+):\s*(.+)$/);
-      const catalogItem = batchQuestionCatalog.find((item) => item.id === (match && match[1]));
-      return {
-        id: catalogItem ? catalogItem.id : match ? match[1] : `custom-${index + 1}`,
-        position: index + 1,
-        question: match ? match[2].trim() : trimmed,
-      };
-    }).filter(Boolean);
+    const catalogByQuestion = new Map(
+      batchQuestionCatalog.map((item) => [normalizeQuestionText(item.question), item])
+    );
+    const parsed = [];
+    batchQuestions.value.split(/\r?\n/).forEach((line) => {
+      if (!line.trim()) return;
+      const entry = parseBatchLine(line);
+      const position = parsed.length + 1;
+      const catalogItem = catalogByQuestion.get(normalizeQuestionText(entry.question));
+      parsed.push({
+        id: entry.explicitId || (catalogItem ? catalogItem.id : `R${String(position).padStart(2, "0")}`),
+        position,
+        rowKey: `batch-${position}`,
+        question: entry.question,
+      });
+    });
+    return parsed;
   }
 
   function batchDetail(data) {
@@ -254,7 +286,7 @@
 
   function appendBatchRow(record) {
     const row = document.createElement("tr");
-    row.className = record.error ? "batch-row-error" : "batch-row";
+    row.dataset.rowKey = record.rowKey;
     const questionCell = document.createElement("th");
     questionCell.scope = "row";
     questionCell.textContent = `${record.id} — ${record.question}`;
@@ -264,81 +296,93 @@
     const reviewCell = document.createElement("td");
     const detailCell = document.createElement("td");
     row.append(questionCell, decisionCell, answerCell, citationCell, reviewCell, detailCell);
-    if (record.error) {
-      decisionCell.textContent = "Error";
-      answerCell.textContent = record.error;
-      citationCell.textContent = "—";
-      reviewCell.textContent = "—";
-      detailCell.textContent = "—";
-      const expand = document.createElement("button");
-      expand.className = "details-button";
-      expand.type = "button";
-      expand.textContent = "Details";
-      expand.setAttribute("aria-expanded", "false");
-      const detailRow = document.createElement("tr");
-      detailRow.className = "batch-detail-row";
-      detailRow.hidden = true;
-      const detailContent = document.createElement("td");
-      detailContent.colSpan = 6;
-      const detail = document.createElement("div");
-      detail.className = "batch-detail";
-      detail.textContent = record.error;
-      detailContent.append(detail);
-      detailRow.append(detailContent);
-      expand.addEventListener("click", () => {
-        record.expanded = !record.expanded;
-        expand.setAttribute("aria-expanded", String(record.expanded));
-        expand.textContent = record.expanded ? "Hide details" : "Details";
-        applyReviewFilter();
-      });
-      detailCell.replaceChildren(expand);
-      batchResultsBody.append(row, detailRow);
-      return { row, detailRow, expandButton: expand };
-    }
-    const data = record.data;
-    const badge = document.createElement("span");
-    badge.className = "decision-badge";
-    badge.dataset.decision = data.decision || "";
-    badge.textContent = data.decision || "No decision";
-    decisionCell.append(badge);
-    answerCell.textContent = truncate(data.answer);
-    citationCell.textContent = String(Array.isArray(data.citations) ? data.citations.length : 0);
-    reviewCell.textContent = data.needs_sme_review ? "Yes" : "No";
-    const expand = document.createElement("button");
-    expand.className = "details-button";
-    expand.type = "button";
-    expand.textContent = "Details";
-    expand.setAttribute("aria-expanded", "false");
     const detailRow = document.createElement("tr");
     detailRow.className = "batch-detail-row";
     detailRow.hidden = true;
     const detailContent = document.createElement("td");
     detailContent.colSpan = 6;
-    detailContent.append(batchDetail(data));
     detailRow.append(detailContent);
-    expand.addEventListener("click", () => {
+    batchResultsBody.append(row, detailRow);
+    Object.assign(record, {
+      row,
+      detailRow,
+      cells: { decisionCell, answerCell, citationCell, reviewCell, detailCell, detailContent },
+    });
+    updateBatchRow(record);
+  }
+
+  function addDetailsButton(record) {
+    const button = document.createElement("button");
+    button.className = "details-button";
+    button.type = "button";
+    button.textContent = record.expanded ? "Hide details" : "Details";
+    button.setAttribute("aria-expanded", String(record.expanded));
+    button.addEventListener("click", () => {
       record.expanded = !record.expanded;
-      expand.setAttribute("aria-expanded", String(record.expanded));
-      expand.textContent = record.expanded ? "Hide details" : "Details";
+      button.setAttribute("aria-expanded", String(record.expanded));
+      button.textContent = record.expanded ? "Hide details" : "Details";
       applyReviewFilter();
     });
-    detailCell.append(expand);
-    batchResultsBody.append(row, detailRow);
-    return { row, detailRow, expandButton: expand };
+    record.cells.detailCell.replaceChildren(button);
+  }
+
+  function updateBatchRow(record) {
+    const { row, detailRow, cells } = record;
+    clearElement(cells.decisionCell);
+    clearElement(cells.answerCell);
+    clearElement(cells.citationCell);
+    clearElement(cells.reviewCell);
+    clearElement(cells.detailCell);
+    clearElement(cells.detailContent);
+    row.className = record.status === "failed" ? "batch-row-error" : "batch-row";
+    if (record.status === "pending") {
+      cells.decisionCell.textContent = "Pending";
+      cells.answerCell.textContent = "Awaiting response…";
+      cells.citationCell.textContent = "—";
+      cells.reviewCell.textContent = "—";
+      detailRow.hidden = true;
+      return;
+    }
+    if (record.status === "failed") {
+      cells.decisionCell.textContent = "Processing error";
+      cells.answerCell.textContent = record.error;
+      cells.citationCell.textContent = "—";
+      cells.reviewCell.textContent = "—";
+      const detail = document.createElement("div");
+      detail.className = "batch-detail";
+      detail.textContent = record.error;
+      cells.detailContent.append(detail);
+      addDetailsButton(record);
+      applyReviewFilter();
+      return;
+    }
+    const data = record.data;
+    const badge = document.createElement("span");
+    badge.className = "decision-badge";
+    badge.dataset.decision = data.decision || "";
+    badge.textContent = batchDecisionLabel(data.decision);
+    cells.decisionCell.append(badge);
+    cells.answerCell.textContent = truncate(data.answer);
+    cells.citationCell.textContent = String(Array.isArray(data.citations) ? data.citations.length : 0);
+    cells.reviewCell.textContent = data.needs_sme_review ? "Yes" : "No";
+    cells.detailContent.append(batchDetail(data));
+    addDetailsButton(record);
+    applyReviewFilter();
   }
 
   function updateBatchSummary() {
     const decisions = {};
     let reviewCount = 0;
-    batchResponses.forEach((record) => {
-      if (record.error) return;
+    const completed = batchResponses.filter((record) => record.status !== "pending");
+    completed.forEach((record) => {
+      if (record.status === "failed") return;
       const decision = record.data.decision || "No decision";
       decisions[decision] = (decisions[decision] || 0) + 1;
       if (record.data.needs_sme_review) reviewCount += 1;
     });
-    const decisionText = Object.entries(decisions).map(([decision, count]) => `${decision}: ${count}`).join(" · ");
-    batchSummary.textContent = `Processed ${batchResponses.length}. ${decisionText || "No completed answers yet."} SME review: ${reviewCount}.`;
-    downloadBatch.disabled = batchResponses.length === 0;
+    const decisionText = Object.entries(decisions).map(([decision, count]) => `${batchDecisionLabel(decision)}: ${count}`).join(" · ");
+    batchSummary.textContent = `Processed ${completed.length} of ${batchResponses.length}. ${decisionText || "No completed answers yet."} SME review: ${reviewCount}.`;
+    downloadBatch.disabled = batchInProgress || completed.length === 0;
     applyReviewFilter();
   }
 
@@ -363,10 +407,11 @@
     processBatch.disabled = true;
     batchQuestions.disabled = true;
     downloadBatch.disabled = true;
-    batchResponses = [];
+    batchResponses = questions.map((entry) => ({ ...entry, status: "pending", expanded: false }));
     clearElement(batchResultsBody);
     batchResults.hidden = false;
     batchStatus.textContent = `Processing 0 of ${questions.length} questions…`;
+    batchResponses.forEach((record) => appendBatchRow(record));
     updateBatchSummary();
     let nextIndex = 0;
     async function worker() {
@@ -375,23 +420,18 @@
         nextIndex += 1;
         let record;
         try {
-          record = {
-            ...questionEntry,
-            status: "completed",
-            data: await requestAnswer(questionEntry.question),
-            expanded: false,
-          };
+          const data = await requestAnswer(questionEntry.question);
+          record = batchResponses[questionEntry.position - 1];
+          record.status = "completed";
+          record.data = data;
         } catch (error) {
-          record = {
-            ...questionEntry,
-            status: "failed",
-            error: safeBatchError(),
-            expanded: false,
-          };
+          record = batchResponses[questionEntry.position - 1];
+          record.status = "failed";
+          record.error = safeBatchError();
         }
-        Object.assign(record, appendBatchRow(record));
-        batchResponses.push(record);
-        batchStatus.textContent = `Processing ${batchResponses.length} of ${questions.length} questions…`;
+        updateBatchRow(record);
+        const completed = batchResponses.filter((item) => item.status !== "pending").length;
+        batchStatus.textContent = `Processing ${completed} of ${questions.length} questions…`;
         updateBatchSummary();
       }
     }
@@ -401,6 +441,7 @@
       processBatch.disabled = false;
       batchQuestions.disabled = false;
       batchStatus.textContent = `Finished processing ${batchResponses.length} questions.`;
+      updateBatchSummary();
     }
   }
 

@@ -51,7 +51,7 @@ textarea:invalid:not(:placeholder-shown) { border-color: var(--error); }
 .results { margin-top: 32px; }
 .result-header { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
 .decision-rail { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
-.decision-rail-item { position: relative; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); cursor: help; padding: 5px 9px; font-size: 0.875rem; font-weight: 700; text-transform: lowercase; }
+.decision-rail-item { position: relative; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); cursor: help; padding: 5px 9px; font-size: 0.875rem; font-weight: 700; }
 .decision-rail-item.is-active { border-color: transparent; }
 .decision-rail-item.is-active[data-decision="answer"] { background: var(--brand); color: var(--surface); }
 .decision-rail-item.is-active[data-decision="answer_negative"] { background: var(--warning-soft); color: var(--warning); }
