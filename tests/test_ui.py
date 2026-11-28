@@ -50,6 +50,11 @@ class UserInterfaceTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("rerank_wait", script.text)
         self.assertIn("citation-chip", script.text)
         self.assertIn("metadata-primary-row", page.text)
+        self.assertIn("DRAFT — Internal RFP Review Packet", script.text)
+        self.assertIn("Safe error information", script.text)
+        self.assertIn("parseBatchQuestions", script.text)
+        self.assertIn("markdownFence", script.text)
+        self.assertIn("Cited source ${sourceIndex + 1}", script.text)
 
     async def test_existing_public_routes_remain_available(self) -> None:
         root = await self.client.get("/")

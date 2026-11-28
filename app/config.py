@@ -22,6 +22,7 @@ class AppSettings(BaseSettings):
     EMBEDDING_MODEL: str = "text-embedding-3-small"
     RERANK_MODEL: str = "rerank-v3.5"
     COHERE_RERANK_RPM: int = Field(default=10, ge=1, le=1000)
+    PROVIDER_TIMEOUT_SECONDS: int = Field(default=30, ge=1, le=120)
     ANSWER_MODEL: str = "gpt-5.6-sol"
     RAG_DEFAULT_TOP_K: int = Field(default=3, ge=1, le=10)
 
